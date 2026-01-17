@@ -22,54 +22,61 @@ export function usePitchDetector(config: PitchDetectorConfig = { reportHz: true 
     const autoCorrelate = (buffer: Float32Array, sampleRate: number) => {
         const SIZE = buffer.length;
 
-        // 1. RMS Check for signal
+        // 1. RMS Check
         let rms = 0;
         for (let i = 0; i < SIZE; i++) {
             const val = buffer[i];
             rms += val * val;
         }
         rms = Math.sqrt(rms / SIZE);
-        if (rms < 0.015) return -1; // Slightly higher threshold
+        if (rms < 0.015) return -1;
 
-        // 2. Optimized Range for Harmonica (100Hz - 3000Hz)
-        // Lag = sampleRate / frequency
+        // 2. Frequency Range
         const MIN_FREQ = 100;
         const MAX_FREQ = 3000;
         const minLag = Math.floor(sampleRate / MAX_FREQ);
         const maxLag = Math.floor(sampleRate / MIN_FREQ);
 
-        let bestOffset = -1;
         let bestCorrelation = 0;
+        let globalMaxLag = -1;
 
-        // We only check lags within the valid range for our instrument
-        // This speeds up the loop significantly and avoids octave errors outside range
+        // First Pass: Find Global Maximum to set threshold
+        // Note: For extreme efficiency, we could just bias the loop, but finding true max is safer.
+        // Array of correlations is small (~400 items)
+        const correlations = new Float32Array(maxLag + 1);
+
         for (let lag = minLag; lag <= maxLag; lag++) {
-            let correlation = 0;
-            // Simple accumulation
+            let sum = 0;
+            // Unnormalized Correlation
             for (let i = 0; i < SIZE - lag; i++) {
-                correlation += buffer[i] * buffer[i + lag];
+                sum += buffer[i] * buffer[i + lag];
             }
+            correlations[lag] = sum;
 
-            // Normalize (simple version to pick peaks)
-            // Ideally we'd do full normalized cross-correlation but this is expensive
-            // For now, raw correlation peak finding usually works for strong clear tones
-
-            if (correlation > bestCorrelation) {
-                bestCorrelation = correlation;
-                bestOffset = lag;
+            if (sum > bestCorrelation) {
+                bestCorrelation = sum;
+                globalMaxLag = lag;
             }
         }
 
-        // Refinement: if connection is weak relative to signal energy, ignore
-        // But for now, let's rely on the RMS check and best peak.
+        if (bestCorrelation < 0.01) return -1; // No correlation
 
-        if (bestCorrelation > 0.01 && bestOffset > -1) { // Basic sanity check
-            // Parabolic interpolation around the peak could go here for extra precision
-            // but keeping it fast for now.
-            return sampleRate / bestOffset;
+        // 3. Peak Picking (Favor Small Lags / High Frequencies)
+        // We look for the FIRST peak (smallest lag) that is "strong enough"
+        // relative to the global maximum.
+        const THRESHOLD = 0.85; // If a higher note is 85% as strong as the lower note, pick it.
+
+        for (let lag = minLag; lag <= maxLag; lag++) {
+            // Is it a local peak?
+            if (correlations[lag] > correlations[lag - 1] && correlations[lag] > correlations[lag + 1]) {
+                // Is it strong enough?
+                if (correlations[lag] > bestCorrelation * THRESHOLD) {
+                    return sampleRate / lag;
+                }
+            }
         }
 
-        return -1;
+        return sampleRate / globalMaxLag;
     };
 
     const matchNote = (frequency: number): NoteDefinition | null => {

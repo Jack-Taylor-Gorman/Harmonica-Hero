@@ -38,6 +38,13 @@ function App() {
         starMap[s.songId] = s.stars;
       });
       setSavedData({ stars: starMap });
+
+      // AUTO-START (Bypass Menu)
+      if (allSongs.length > 0) {
+        console.log("Auto-starting " + allSongs[0].title);
+        setSelectedSong(allSongs[0]);
+        setView('game');
+      }
     };
     init();
   }, []);
