@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { usePitchDetector } from '../audio/PitchDetection';
 import { type Song, type GameNote } from '../game/Types';
-import { TEST_SONG } from '../game/Songs';
+import { SONGS } from '../game/Songs';
 import { Capacitor } from '@capacitor/core';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import './GameCanvas.css';
@@ -91,24 +91,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
     // Stats Ref
     const statsRef = useRef({ perfect: 0, good: 0, bad: 0, missed: 0, streak: 0, maxStreak: 0 });
 
-
     useEffect(() => {
         prevNoteRef.current = currentNoteRef.current;
         currentNoteRef.current = currentNote;
     }, [currentNote]);
 
     // Game State Mutable Refs
-    const songRef = useRef<Song>(JSON.parse(JSON.stringify(TEST_SONG)));
-
-
+    const songRef = useRef<Song>(JSON.parse(JSON.stringify(SONGS[0])));
 
     useEffect(() => {
         console.log("GameCanvas: Mounting...");
-        if (!TEST_SONG) console.error("GameCanvas: TEST_SONG is undefined!");
-        else console.log("GameCanvas: Song loaded", TEST_SONG.title);
+        if (!songRef.current) console.error("GameCanvas: NO SONG LOADED!");
+        else console.log("GameCanvas: Song loaded", songRef.current.title);
 
         try {
             startListening();
+
         } catch (e) {
             console.error("GameCanvas: Error starting listener", e);
         }
