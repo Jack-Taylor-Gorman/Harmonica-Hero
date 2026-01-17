@@ -12,7 +12,7 @@ const NOTE_SPEED = 300; // Faster scroll for better precision
 const WINDOW_PERFECT = 0.08;
 const WINDOW_GOOD = 0.20;
 const LOOKAHEAD = 3.0; // Seconds of notes to render
-const VERSION = "v0.11.5"; // 1-Frame Debounce
+const VERSION = "v0.12.4"; // Zoom, 3x Speed, Dynamic Lookahead
 
 interface HitAnimation {
     x: number;
@@ -26,11 +26,51 @@ interface HitAnimation {
 const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const requestRef = useRef<number | null>(null);
-    const startTimeRef = useRef<number | null>(null);
+
+    // Time Keeping (Delta Time approach for Variable Speed)
+    const lastFrameTimeRef = useRef<number | null>(null);
+    const audioTimeRef = useRef<number>(0);
+
     const scoreRef = useRef<number>(0);
     const [score, setScore] = useState(0);
     const [streak, setStreak] = useState(0); // Visual streak state
     const [gameState] = useState<'playing' | 'finished'>('playing');
+
+    // Controls
+    const [zoomLevel, setZoomLevel] = useState(300); // Visual Pixel Speed
+    const zoomLevelRef = useRef(300);
+
+    const [playbackSpeed, setPlaybackSpeed] = useState(1.0); // Time Scale
+    const playbackSpeedRef = useRef(1.0);
+
+    const handleZoomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = parseInt(e.target.value);
+        setZoomLevel(val);
+        zoomLevelRef.current = val;
+    };
+
+    const handleSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = parseFloat(e.target.value);
+        setPlaybackSpeed(val);
+        playbackSpeedRef.current = val;
+    };
+
+    const resetGame = () => {
+        lastFrameTimeRef.current = null;
+        audioTimeRef.current = 0;
+        scoreRef.current = 0;
+        setScore(0);
+        setStreak(0);
+        statsRef.current = { perfect: 0, good: 0, bad: 0, missed: 0, streak: 0, maxStreak: 0 };
+        hitAnimationsRef.current = [];
+        activeHitLockRef.current = null;
+        silenceStartRef.current = 0;
+        lastNoteRef.current = null;
+
+        // Reset Notes
+        songRef.current.notes.forEach(n => { n.hit = false; n.missed = false; });
+        console.log("Game Reset!");
+    };
 
     // Animation effects
     const hitAnimationsRef = useRef<HitAnimation[]>([]);
@@ -47,6 +87,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
     const activeHitLockRef = useRef<{ hole: number; type: string } | null>(null);
     const silenceStartRef = useRef<number>(0);
     const lastNoteRef = useRef<any>(null);
+
+    // Stats Ref
+    const statsRef = useRef({ perfect: 0, good: 0, bad: 0, missed: 0, streak: 0, maxStreak: 0 });
+
 
     useEffect(() => {
         prevNoteRef.current = currentNoteRef.current;
@@ -109,26 +153,33 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
 
     const update = (time: number) => {
         try {
-            if (!startTimeRef.current) startTimeRef.current = time;
-            const audioTime = (time - startTimeRef.current) / 1000;
+            // Delta Time Calculation
+            if (lastFrameTimeRef.current === null) {
+                lastFrameTimeRef.current = time;
+            }
+            const deltaTime = (time - lastFrameTimeRef.current) / 1000; // seconds
+            lastFrameTimeRef.current = time;
+
+            // Advance Game Clock
+            // Cap delta time to avoid huge jumps if tab was inactive (max 100ms jump)
+            const safeDelta = Math.min(deltaTime, 0.1);
+            audioTimeRef.current += safeDelta * playbackSpeedRef.current;
+            const audioTime = audioTimeRef.current;
 
             const notes = songRef.current.notes;
             const lastNote = notes[notes.length - 1];
             if (lastNote && audioTime > lastNote.time + 3.0) {
                 console.log("GameCanvas: Looping Song!");
-                startTimeRef.current = time;
+                audioTimeRef.current = 0; // Reset Time
                 scoreRef.current = 0;
                 setScore(0);
                 songRef.current.notes.forEach(n => { n.hit = false; n.missed = false; });
 
-                // CRITICAL LOOP FIX: Must return here to prevent processing the frame
-                // with the OLD (high) audioTime, which would instantly fail all notes.
                 if (gameState === 'playing') requestRef.current = requestAnimationFrame(update);
                 return;
             }
 
             const detected = currentNoteRef.current;
-            const prevDetected = prevNoteRef.current; // Raw previous frame (still useful for immediate transitions)
 
             // DEBOUNCE LOGIC for "Fresh Attack":
             // To prevent mic flickering (Note -> Null -> Note) from registering as a double hit,
@@ -164,38 +215,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                 }
                 // If effectivelyHolding SAME note, isFreshAttack remains false.
             }
-            // Logic patch: 'effectivelyHolding' uses 'lastNoteRef' which is 'detected' from this frame if detected is true.
-            // We need the *previous* effective state. 
-            // Actually, we can just use the 'debounce' concept:
-            // "You can only hit a note if the previous *stabilized* state was different."
 
-            // Let's simplify:
-            // We only 'reset' our ability to hit a note if we see DIFFERENT note OR sustained silence.
-            // We use 'activeHitLock' ref to track if the current 'sound' has already consumed a note.
-
-            // Ref: activeHitLockRef = { hole, type } | null
-            // If detected != activeHitLock, we clear lock.
-            // If detected == activeHitLock, we ignore.
-            // BUT, if detected == null, we only clear lock if null persists > 100ms.
-
+            // Let's basically not clear the lock until silence > 100ms.
             if (detected) {
                 // Check if we are locked on this note
                 const isLocked = activeHitLockRef.current &&
                     activeHitLockRef.current.hole === detected.hole &&
                     activeHitLockRef.current.type === detected.type;
 
-                // Check if this is a "Same Note" continuation despite a brief gap (Debounce Phase)
-                // If we are NOT locked, but we are in "Debounce Grace Period" of the SAME note, re-lock?
-                // No, lock is cleared by silence.
-
-                // Let's basically not clear the lock until silence > 100ms.
-
                 if (!isLocked) {
-                    // Check against "Last Stable Note" to allow instant trills?
-                    // If we switched notes directly (4->5), lock should be cleared instantly.
-                    // The logic below handles that:
-                    // If detected changes, it won't match isLocked, so we proceed to HIT.
-
                     isFreshAttack = true;
                     activeHitLockRef.current = detected; // Lock it!
                 } else {
@@ -211,18 +239,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                     activeHitLockRef.current = null;
                 }
             }
-
-            // Override: If we switched notes directly (e.g. 4 -> 5), the lock (4) wouldn't match detected (5).
-            // effectively allowing the new note. But we must set the NEW lock.
-            // My logic above: if (!isLocked) -> isFreshAttack=true, lock=detected.
-            // Perfect.
-            // Problem: If I have lock (4), and play (5). !isLocked(5) is true. Fresh attack 5. Lock becomes 5.
-            // Perfect.
-            // Problem: Mic Glitch. Lock (4). Silence (0ms). Silence (50ms). Lock (4) persists.
-            // Note (4). isLocked(4) is true. No attack.
-            // Perfect.
-
-            // ACTUAL CODE IMPLEMENTATION:
 
             if (isFreshAttack) {
                 // Find best note match
@@ -255,15 +271,24 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                         points = 300;
                         ratingText = "PERFECT!";
                         fontSize = 80; // Super Huge!
+                        statsRef.current.perfect++;
                     } else {
                         points = 100;
                         ratingText = "GOOD";
                         fontSize = 40; // Medium
+                        statsRef.current.good++;
                     }
 
                     note.hit = true;
                     scoreRef.current += points;
                     setScore(scoreRef.current);
+
+                    // Streak Update
+                    statsRef.current.streak++;
+                    if (statsRef.current.streak > statsRef.current.maxStreak) {
+                        statsRef.current.maxStreak = statsRef.current.streak;
+                    }
+                    setStreak(statsRef.current.streak);
 
                     hitAnimationsRef.current.push({
                         x: note.hole - 1,
@@ -271,7 +296,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                         color: '#E65100', // Deep Orange
                         text: ratingText,
                         fontSize: fontSize,
-                        startTime: time
+                        startTime: time // Use System Time for animation aging!
                     });
                 }
             }
@@ -281,6 +306,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                 // Use widest window (GOOD) + buffer for misses
                 if (!note.hit && !note.missed && audioTime > note.time + WINDOW_GOOD + 0.1) {
                     note.missed = true;
+                    statsRef.current.missed++;
+                    statsRef.current.bad++; // Treat miss as bad or track separate? Just missed.
+                    statsRef.current.streak = 0;
+                    setStreak(0);
                 }
             });
 
@@ -300,6 +329,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
         const height = canvas.height;
         const laneWidth = width / 10;
         const targetY = height - 100;
+
+        // Dynamic Lookahead: Ensure we render enough notes to fill the screen
+        // plus a small buffer, regardless of zoom level.
+        const zoom = zoomLevelRef.current;
+        const visibleSeconds = (targetY / zoom) + 1.0; // +1s buffer off-screen top
+        // Use the larger of fixed lookahead or calculated visible area to prevent pop-in
+        const effectiveLookahead = Math.max(LOOKAHEAD, visibleSeconds);
 
         // Clear - Gray Background
         ctx.fillStyle = '#f5f5f5';
@@ -356,12 +392,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
 
             const secondsUntilHit = note.time - audioTime;
             // Standard LoA check
-            if (secondsUntilHit > LOOKAHEAD || secondsUntilHit < -1) return;
+            if (secondsUntilHit > effectiveLookahead || secondsUntilHit < -1) return;
 
             // Calculate Position
             // y = Visual 'bottom' of the note (closest to target) because it flows down
-            const y = targetY - (secondsUntilHit * NOTE_SPEED);
-            const noteHeight = note.duration * NOTE_SPEED;
+            const y = targetY - (secondsUntilHit * zoom);
+            const noteHeight = note.duration * zoom;
             const laneIndex = note.hole - 1;
             const x = laneIndex * laneWidth;
 
@@ -467,7 +503,42 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                             </div>
                         )}
                     </div>
-                    <button className="exit-btn" onClick={onExit}>Exit</button>
+
+                    <div className="top-center-controls" style={{ display: 'flex', gap: '20px' }}>
+                        <div className="speed-control">
+                            <label>Zoom: {Math.round(zoomLevel / 30 * 10)}%</label>
+                            <input
+                                type="range"
+                                min="100"
+                                max="900"
+                                step="50"
+                                value={zoomLevel}
+                                onChange={handleZoomChange}
+                                onMouseDown={(e) => e.stopPropagation()}
+                            />
+                        </div>
+                        <div className="speed-control">
+                            <label>Speed: {playbackSpeed}x</label>
+                            <input
+                                type="range"
+                                min="0.5"
+                                max="3.0"
+                                step="0.1"
+                                value={playbackSpeed}
+                                onChange={handleSpeedChange}
+                                onMouseDown={(e) => e.stopPropagation()}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="hud-btn-group">
+                        <button className="hud-btn icon-only retry-btn" onClick={resetGame} title="Retry">
+                            ↻
+                        </button>
+                        <button className="hud-btn icon-only back-btn" onClick={onExit} title="Back">
+                            ✕
+                        </button>
+                    </div>
                 </div>
             </div>
             <canvas

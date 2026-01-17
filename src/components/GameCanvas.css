@@ -60,27 +60,82 @@
     margin-left: 10px;
 }
 
-background: rgba(42, 42, 42, 0.8);
-border: 1px solid rgba(255, 255, 255, 0.2);
-color: white;
-padding: 8px 16px;
-border-radius: 4px;
-font-family: 'Outfit',
-sans-serif;
-cursor: pointer;
-transition: all 0.2s;
+/* Button Group Styles */
+.hud-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* Tighter gap */
 }
 
-.exit-btn:hover {
-    background: #E65100;
+.speed-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #ccc;
+    font-size: 0.75rem;
+    /* Smaller label */
+    margin-right: 15px;
+    /* Separate slider from buttons */
+}
+
+.speed-control input {
+    width: 90px;
+    height: 4px;
+    /* Slimmer slider */
+    accent-color: #E65100;
+}
+
+/* Base style for HUD action buttons */
+.hud-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.9);
+    height: 32px;
+    border-radius: 16px;
+    /* Pill shape */
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0 14px;
+}
+
+.hud-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #fff;
+    color: #fff;
+}
+
+.hud-btn.icon-only {
+    width: 32px;
+    padding: 0;
+    font-size: 1.1rem;
+    border-radius: 50%;
+    /* Circle */
+}
+
+/* Specific Tweak for Retry to standout slightly? No, keeping uniform is better for "fitting next to each other" */
+.retry-btn:hover {
     border-color: #E65100;
+    color: #E65100;
+    background: rgba(230, 81, 0, 0.1);
+}
+
+.back-btn:hover {
+    border-color: #d32f2f;
+    color: #ffcdd2;
+    background: rgba(211, 47, 47, 0.1);
 }
 
 .score {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     font-weight: 800;
     color: white;
     text-shadow: 0 2px 10px rgba(230, 81, 0, 0.5);
-    /* Orange glow */
     margin: 0;
+    letter-spacing: -1px;
 }

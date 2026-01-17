@@ -35,6 +35,72 @@ const SAINTS_TABS = `
 
 export const SONGS: Song[] = [
   {
+    id: 'country-roads',
+    title: "Take Me Home, Country Roads",
+    artist: "John Denver",
+    bpm: 100,
+    offset: 0,
+    // "Country road, take me home"
+    notes: TabParser.parse("Country Roads", `
+      4:2 -4:2 5:4 
+      5:2 4:2 -4:4
+      5:2 -4:2 4:2 5:2 6:4 -6:4
+      
+      -6:2 5:2 6:2 5:2 5:2 4:2 -4:2 
+      5:2 5:2 -4:2 4:2 4:4 -4:2 4:4
+      
+      4:2 -4:2 5:4 
+      5:2 4:2 -4:4
+      5:2 -4:2 4:2 5:2 6:4 -6:4
+    `, { bpm: 120 })
+  },
+  {
+    id: 'big-iron',
+    title: "Big Iron",
+    artist: "Marty Robbins",
+    bpm: 140,
+    offset: 0,
+    notes: TabParser.parse("Big Iron", `
+      -5:2 6:2 -6:2 7:2 7:2 -8:2 -6:2 -5:4
+      -5:2 6:2 -6:2 -4:2 -4:2 4:2 -4:4
+      
+      -5:2 6:2 -6:2 7:2 7:2 -8:2 -6:2 -5:4
+      -5:2 6:2 -6:2 -5:2 -6:2 7:2 -8:4
+
+      -6:2 7:2 -8:2 -8:2 -8:2 -8:2 -8:2 -8:4
+      -8:2 -8:2 -8:2 7:2 7:2 -6:2 7:4
+      
+      -5:2 6:2 -6:2 7:2 7:2 -8:2 -6:2 -5:4
+      -5:2 6:2 -6:2 -4:2 -4:2 4:2 -4:4
+      -5:2 -5:2 -5:2 6:2 -5:4
+    `, { bpm: 140 })
+  },
+  {
+    id: 'amazing-grace',
+    title: "Amazing Grace",
+    artist: "Traditional",
+    bpm: 90,
+    offset: 0,
+    notes: TabParser.parse("Amazing Grace", `
+      6:2 7:4 8:1 7:1 8:4 -8:2 7:4 6:4 
+      6:2 7:4 8:1 7:1 8:4 -8:4 9:8
+      8:2 9:4 9:1 8:1 7:4 6:2 6:4 5:2 6:4
+      6:2 7:4 8:1 7:1 8:4 -8:2 7:8
+    `, { bpm: 90 })
+  },
+  {
+    id: 'piano-man',
+    title: "Piano Man (Intro)",
+    artist: "Billy Joel",
+    bpm: 140,
+    offset: 0,
+    notes: TabParser.parse("Piano Man", `
+      5:2 6:2 6:2 6:2 6:2 5:2 -5:2 5:2 -4:4 4:4 4:4
+      5:2 6:2 6:2 6:2 6:2 5:2 -5:2 5:2 -4:4 4:4 4:4
+      5:2 5:2 5:2 5:2 -4:2 4:2 4:2 4:2 3:2 4:4
+    `, { bpm: 140 })
+  },
+  {
     id: 'oh-susannah',
     title: "Oh! Susannah",
     artist: "Traditional",
