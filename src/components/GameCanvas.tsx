@@ -587,6 +587,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                     padding: '15px 0'
                 }}>
 
+                    {/* LEFT GROUP: Legend */}
+                    <div style={{ position: 'absolute', left: '20px', display: 'flex', flexDirection: 'column', gap: '5px', opacity: 0.8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '15px', height: '15px', background: '#E65100', borderRadius: '4px' }}></div>
+                            <span style={{ color: '#fff', fontSize: '1rem', fontFamily: 'Outfit, sans-serif' }}>Blow</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '15px', height: '15px', background: '#2a2a2a', border: '1px solid #666', borderRadius: '4px' }}></div>
+                            <span style={{ color: '#fff', fontSize: '1rem', fontFamily: 'Outfit, sans-serif' }}>Draw</span>
+                        </div>
+                    </div>
+
                     {/* CENTER GROUP: Combo & Retry */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
 
