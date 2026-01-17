@@ -39,12 +39,15 @@ function App() {
       });
       setSavedData({ stars: starMap });
 
-      // AUTO-START (Bypass Menu)
+      // AUTO-START REMOVED: User requested a button for Katyusha.
+      // The menu will render the single song from Songs.ts.
+      /*
       if (allSongs.length > 0) {
         console.log("Auto-starting " + allSongs[0].title);
         setSelectedSong(allSongs[0]);
         setView('game');
       }
+      */
     };
     init();
   }, []);
