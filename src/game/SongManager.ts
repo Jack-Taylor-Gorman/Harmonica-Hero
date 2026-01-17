@@ -22,12 +22,11 @@ class SongManager {
     }
 
     async init() {
-        // 1. Seed if totally empty
-        const count = await db.songs.count();
-        if (count === 0) {
-            console.log("SongManager: Seeding local DB with default songs...");
-            await db.songs.bulkAdd(SONGS);
-        }
+        // 1. FORCE SEED: Always clear and re-populate from local code to ensure updates apply.
+        // This fixes the issue where old songs persist even if removed from code.
+        console.log("SongManager: Re-seeding local DB from latest code...");
+        await db.songs.clear();
+        await db.songs.bulkAdd(SONGS);
 
         // 2. Try Fetch Cloud
         if (this.isOnline) {
