@@ -32,7 +32,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
     const audioTimeRef = useRef<number>(0);
 
     const scoreRef = useRef<number>(0);
-    const [score, setScore] = useState(0);
+    const [, setScore] = useState(0); // Score used for logic/stats, but not displayed in this simplified HUD
     const [streak, setStreak] = useState(0); // Visual streak state
     const [gameState] = useState<'playing' | 'finished'>('playing');
 
@@ -582,36 +582,48 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
             <div className="game-hud">
                 <div className="hud-top-bar" style={{
                     display: 'flex',
-                    justifyContent: 'space-between',
+                    justifyContent: 'center', // Center everything
                     alignItems: 'center',
                     width: '100%',
-                    maxWidth: '95%',
-                    padding: '10px 20px'
+                    position: 'relative', // For absolute positioning of Back button
+                    padding: '15px 0'
                 }}>
-                    {/* Left: Score & Streak */}
-                    <div className="top-left-stats" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <div className="score">Score: {score}</div>
-                        {streak > 5 && (
-                            <div className="streak-hud">
-                                <span className="streak-count">{streak}</span>
-                                <span className="streak-label">COMBO</span>
-                            </div>
-                        )}
-                    </div>
 
-                    {/* Right Group: Retry + (Back if not Android) */}
-                    <div className="hud-right-group" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <button className="hud-btn icon-only retry-btn" onClick={resetGame} title="Retry">
+                    {/* CENTER GROUP: Combo & Retry */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+
+                        {/* Combo Counter (Main Focus) */}
+                        <div className="streak-display" style={{
+                            fontSize: '3rem',
+                            fontWeight: '800',
+                            color: streak > 0 ? '#fff' : '#666',
+                            textShadow: streak > 0 ? '0 0 20px #E65100' : 'none',
+                            minWidth: '60px',
+                            textAlign: 'center',
+                            fontFamily: 'Outfit, sans-serif'
+                        }}>
+                            {streak}
+                        </div>
+
+                        {/* Reset Button */}
+                        <button
+                            className="hud-btn icon-only retry-btn"
+                            onClick={resetGame}
+                            title="Retry"
+                            style={{ width: '40px', height: '40px', fontSize: '1.2rem' }}
+                        >
                             ↻
                         </button>
+                    </div>
 
-                        {/* Only show 'X' if NOT Android */}
-                        {!isAndroid && (
+                    {/* Back Button (Absolute Right) */}
+                    {!isAndroid && (
+                        <div style={{ position: 'absolute', right: '20px' }}>
                             <button className="hud-btn icon-only back-btn" onClick={onExit} title="Back">
                                 ✕
                             </button>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -652,12 +664,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                     />
                 </div>
             </div>
+
             <canvas
                 ref={canvasRef}
                 className="game-canvas"
             />
-
-        </div >
+        </div>
     );
 };
 
