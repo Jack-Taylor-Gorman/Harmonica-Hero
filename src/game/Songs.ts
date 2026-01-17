@@ -34,38 +34,38 @@ const SAINTS_TABS = `
 `;
 
 export const SONGS: Song[] = [
-    {
-        id: 'oh-susannah',
-        title: "Oh! Susannah",
-        artist: "Traditional",
-        bpm: 180,
-        offset: 0,
-        notes: TabParser.parse("Oh! Susannah", OH_SUSANNAH_TABS, { bpm: 120 })
-    },
-    {
-        id: 'ode-to-joy',
-        title: "Ode to Joy",
-        artist: "Beethoven",
-        bpm: 140,
-        offset: 0,
-        notes: TabParser.parse("Ode to Joy", ODE_TO_JOY_TABS, { bpm: 120 })
-    },
-    {
-        id: 'mary-lamb',
-        title: "Mary Had a Little Lamb",
-        artist: "Traditional",
-        bpm: 100,
-        offset: 0,
-        notes: TabParser.parse("Mary Had a Little Lamb", MARY_LAMB_TABS, { bpm: 100 })
-    },
-    {
-        id: 'saints',
-        title: "When The Saints",
-        artist: "Traditional",
-        bpm: 160,
-        offset: 0,
-        notes: TabParser.parse("When The Saints", SAINTS_TABS, { bpm: 140 })
-    }
+  {
+    id: 'oh-susannah',
+    title: "Oh! Susannah",
+    artist: "Traditional",
+    bpm: 180,
+    offset: 0,
+    notes: TabParser.parse("Oh! Susannah", OH_SUSANNAH_TABS, { bpm: 120 })
+  },
+  {
+    id: 'ode-to-joy',
+    title: "Ode to Joy",
+    artist: "Beethoven",
+    bpm: 140,
+    offset: 0,
+    notes: TabParser.parse("Ode to Joy", ODE_TO_JOY_TABS, { bpm: 120 })
+  },
+  {
+    id: 'mary-lamb',
+    title: "Mary Had a Little Lamb",
+    artist: "Traditional",
+    bpm: 100,
+    offset: 0,
+    notes: TabParser.parse("Mary Had a Little Lamb", MARY_LAMB_TABS, { bpm: 100 })
+  },
+  {
+    id: 'saints',
+    title: "When The Saints",
+    artist: "Traditional",
+    bpm: 160,
+    offset: 0,
+    notes: TabParser.parse("When The Saints", SAINTS_TABS, { bpm: 140 })
+  }
 ];
 
 export const TEST_SONG = SONGS[0];

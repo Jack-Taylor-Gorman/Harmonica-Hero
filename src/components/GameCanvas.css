@@ -19,30 +19,68 @@
 
 .game-hud {
     position: absolute;
-    top: 20px;
-    left: 20px;
+    top: 0;
+    left: 0;
+    width: 100%;
     z-index: 10;
-    color: white;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     pointer-events: none;
-    /* Let clicks pass through */
+    display: flex;
+    /* Enable centering of children */
+    justify-content: center;
+    /* Center horizontally */
+    padding: 0;
 }
 
-.exit-btn {
+.hud-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: auto;
+    /* Fit content */
+    min-width: 420px;
+    /* Consistent width */
+    max-width: 90%;
+    /* Prevent cutoff on small screens */
+    background-color: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: none;
+    /* Hang from top */
+    border-radius: 0 0 16px 16px;
+    /* Rounded bottom */
+    padding: 15px 50px;
+    /* Extra horizontal padding to pull elements inwards */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
     pointer-events: auto;
-    margin-top: 10px;
+}
+
+.star-badge {
+    color: #FFD700;
+    text-shadow: 0 0 5px #E65100;
+    font-size: 1.2em;
+    margin-left: 10px;
+}
+
+background: rgba(42, 42, 42, 0.8);
+border: 1px solid rgba(255, 255, 255, 0.2);
+color: white;
+padding: 8px 16px;
+border-radius: 4px;
+font-family: 'Outfit',
+sans-serif;
+cursor: pointer;
+transition: all 0.2s;
+}
+
+.exit-btn:hover {
+    background: #E65100;
+    border-color: #E65100;
 }
 
 .score {
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: 800;
-    color: var(--primary-orange);
-}
-
-.debug-note {
-    font-family: monospace;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 0.5rem;
-    border-radius: 4px;
-    margin-top: 0.5rem;
+    color: white;
+    text-shadow: 0 2px 10px rgba(230, 81, 0, 0.5);
+    /* Orange glow */
+    margin: 0;
 }

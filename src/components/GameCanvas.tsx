@@ -12,7 +12,7 @@ const NOTE_SPEED = 300; // Faster scroll for better precision
 const WINDOW_PERFECT = 0.08;
 const WINDOW_GOOD = 0.20;
 const LOOKAHEAD = 3.0; // Seconds of notes to render
-const VERSION = "v0.9.0"; // Bad Rating Added + Strict Hold Logic
+const VERSION = "v0.11.5"; // 1-Frame Debounce
 
 interface HitAnimation {
     x: number;
@@ -29,6 +29,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
     const startTimeRef = useRef<number | null>(null);
     const scoreRef = useRef<number>(0);
     const [score, setScore] = useState(0);
+    const [streak, setStreak] = useState(0); // Visual streak state
     const [gameState] = useState<'playing' | 'finished'>('playing');
 
     // Animation effects
@@ -41,6 +42,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
     // Track current and PREVIOUS note to detect fresh attacks
     const currentNoteRef = useRef<any>(null);
     const prevNoteRef = useRef<any>(null);
+
+    // Smooth Input Refs
+    const activeHitLockRef = useRef<{ hole: number; type: string } | null>(null);
+    const silenceStartRef = useRef<number>(0);
+    const lastNoteRef = useRef<any>(null);
 
     useEffect(() => {
         prevNoteRef.current = currentNoteRef.current;
@@ -122,11 +128,101 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
             }
 
             const detected = currentNoteRef.current;
-            const prevDetected = prevNoteRef.current;
+            const prevDetected = prevNoteRef.current; // Raw previous frame (still useful for immediate transitions)
 
-            // STRICT MODE: Logic Overhaul
-            // "Fresh Attack": Note this frame is different from last frame, OR last frame was null.
-            const isFreshAttack = detected && (!prevDetected || prevDetected.hole !== detected.hole || prevDetected.type !== detected.type);
+            // DEBOUNCE LOGIC for "Fresh Attack":
+            // To prevent mic flickering (Note -> Null -> Note) from registering as a double hit,
+            // we only consider the note "released" if we've had sustained silence.
+
+            // 1. If we have a note, update the 'Last Known Note' and reset silence timer
+            if (detected) {
+                lastNoteRef.current = detected;
+                silenceStartRef.current = 0;
+            } else {
+                // 2. If no note, start silence timer if not started
+                if (silenceStartRef.current === 0) silenceStartRef.current = time;
+            }
+
+            // 3. Determine "Effective" Previous Note State
+            // If silence has persisted < 16ms (1 frame), we "pretend" we are still holding the last note.
+            // This filters ONLY single-frame dropouts.
+            const minSilenceDuration = 16; // ms (User requested 1 frame)
+            const effectivelyHolding = lastNoteRef.current && (detected || (time - silenceStartRef.current < minSilenceDuration));
+
+            // 4. Fresh Attack Check
+            // A. Must have a detected note NOW.
+            // B. Must NOT have been "effectively holding" the SAME note previously.
+            //    (i.e., either we were effectively holding nothing, OR we were effectively holding a DIFFERENT note)
+
+            let isFreshAttack = false;
+
+            if (detected) {
+                if (!effectivelyHolding) {
+                    isFreshAttack = true; // Clean attack after real silence
+                } else if (lastNoteRef.current && (lastNoteRef.current.hole !== detected.hole || lastNoteRef.current.type !== detected.type)) {
+                    isFreshAttack = true; // Clean transition to NEW note (instant switch)
+                }
+                // If effectivelyHolding SAME note, isFreshAttack remains false.
+            }
+            // Logic patch: 'effectivelyHolding' uses 'lastNoteRef' which is 'detected' from this frame if detected is true.
+            // We need the *previous* effective state. 
+            // Actually, we can just use the 'debounce' concept:
+            // "You can only hit a note if the previous *stabilized* state was different."
+
+            // Let's simplify:
+            // We only 'reset' our ability to hit a note if we see DIFFERENT note OR sustained silence.
+            // We use 'activeHitLock' ref to track if the current 'sound' has already consumed a note.
+
+            // Ref: activeHitLockRef = { hole, type } | null
+            // If detected != activeHitLock, we clear lock.
+            // If detected == activeHitLock, we ignore.
+            // BUT, if detected == null, we only clear lock if null persists > 100ms.
+
+            if (detected) {
+                // Check if we are locked on this note
+                const isLocked = activeHitLockRef.current &&
+                    activeHitLockRef.current.hole === detected.hole &&
+                    activeHitLockRef.current.type === detected.type;
+
+                // Check if this is a "Same Note" continuation despite a brief gap (Debounce Phase)
+                // If we are NOT locked, but we are in "Debounce Grace Period" of the SAME note, re-lock?
+                // No, lock is cleared by silence.
+
+                // Let's basically not clear the lock until silence > 100ms.
+
+                if (!isLocked) {
+                    // Check against "Last Stable Note" to allow instant trills?
+                    // If we switched notes directly (4->5), lock should be cleared instantly.
+                    // The logic below handles that:
+                    // If detected changes, it won't match isLocked, so we proceed to HIT.
+
+                    isFreshAttack = true;
+                    activeHitLockRef.current = detected; // Lock it!
+                } else {
+                    // We are locked. Reset silence timer to keep lock alive.
+                    silenceStartRef.current = 0;
+                }
+            } else {
+                // No note detected.
+                if (silenceStartRef.current === 0) silenceStartRef.current = time;
+
+                if (time - silenceStartRef.current > 100) {
+                    // Sustained silence! Clear the lock.
+                    activeHitLockRef.current = null;
+                }
+            }
+
+            // Override: If we switched notes directly (e.g. 4 -> 5), the lock (4) wouldn't match detected (5).
+            // effectively allowing the new note. But we must set the NEW lock.
+            // My logic above: if (!isLocked) -> isFreshAttack=true, lock=detected.
+            // Perfect.
+            // Problem: If I have lock (4), and play (5). !isLocked(5) is true. Fresh attack 5. Lock becomes 5.
+            // Perfect.
+            // Problem: Mic Glitch. Lock (4). Silence (0ms). Silence (50ms). Lock (4) persists.
+            // Note (4). isLocked(4) is true. No attack.
+            // Perfect.
+
+            // ACTUAL CODE IMPLEMENTATION:
 
             if (isFreshAttack) {
                 // Find best note match
@@ -241,8 +337,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                 ctx.font = '16px Outfit, sans-serif';
             }
 
-            // UI: Lane Numbers Top (y=30)
-            ctx.fillText((i + 1).toString(), x + laneWidth / 2, 30);
+            // UI: Lane Numbers Top (Moved down to accommodate HUD bar)
+            ctx.fillText((i + 1).toString(), x + laneWidth / 2, 120);
         }
 
         // Draw Target Line
@@ -255,27 +351,60 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
 
         // Draw Notes
         songRef.current.notes.forEach(note => {
-            if (note.hit) return;
+            // 1. MISS LOGIC: If missed, DO NOT RENDER (User Request: "immediately disappear")
+            if (note.missed) return;
 
             const secondsUntilHit = note.time - audioTime;
+            // Standard LoA check
             if (secondsUntilHit > LOOKAHEAD || secondsUntilHit < -1) return;
 
+            // Calculate Position
+            // y = Visual 'bottom' of the note (closest to target) because it flows down
             const y = targetY - (secondsUntilHit * NOTE_SPEED);
             const noteHeight = note.duration * NOTE_SPEED;
             const laneIndex = note.hole - 1;
             const x = laneIndex * laneWidth;
 
-            // Note Body
+            // Note Top Y
+            const noteTop = y - noteHeight;
+
+            // 2. HIT LOGIC: "Clip" Effect
+            // Keep rendering the note, but hide any part that is below the target line.
+            // AND hide the note head if it crosses the line?
+            // "make the notes that were hit to stay but cover the notes after the bar"
+            // -> Just use a screen clip region for HIT notes.
+
             const color = note.type === 'blow' ? '#E65100' : '#2a2a2a';
-
             ctx.fillStyle = color;
-            ctx.fillRect(x + 4, y - noteHeight, laneWidth - 8, noteHeight);
 
-            // Note Head
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x + 4, y - 10, laneWidth - 8, 20);
-            ctx.fillRect(x + 4, y - 10, laneWidth - 8, 20);
+            if (note.hit) {
+                // CLIP REGION: Define a rectangle from 0 to targetY (inclusive)
+                // Draw everything inside it. Anything below targetY is hidden.
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(0, 0, width, targetY);
+                ctx.clip();
+
+                // Draw Body
+                ctx.fillRect(x + 4, noteTop, laneWidth - 8, noteHeight);
+
+                // Draw Head
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x + 4, y - 10, laneWidth - 8, 20);
+                ctx.fillRect(x + 4, y - 10, laneWidth - 8, 20);
+
+                ctx.restore();
+            } else {
+                // NORMAL RENDER (Not hit yet)
+                // Render fully, even if overlapping line (standard gameplay)
+                ctx.fillRect(x + 4, noteTop, laneWidth - 8, noteHeight);
+
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x + 4, y - 10, laneWidth - 8, 20);
+                ctx.fillRect(x + 4, y - 10, laneWidth - 8, 20);
+            }
         });
 
         // Debug: Draw Current Pitch Indicator
@@ -328,16 +457,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
     return (
         <div className="game-container">
             <div className="game-hud">
-                <div className="score">Score: {score}</div>
-                <div className="debug-note">
-                    Detected: <span style={{ color: currentNote ? '#0f0' : '#888' }}>
-                        {currentNote ? `${currentNote.hole} ${currentNote.type.toUpperCase()} (${currentNote.note})` : '--'}
-                    </span>
-                    <span style={{ fontSize: '0.8em', color: '#666', marginLeft: '10px' }}>
-                        (Win: {WINDOW_GOOD}s)
-                    </span>
+                <div className="hud-top-bar">
+                    <div className="top-left-stats">
+                        <div className="score">Score: {score}</div>
+                        {streak > 5 && (
+                            <div className="streak-hud">
+                                <span className="streak-count">{streak}</span>
+                                <span className="streak-label">COMBO</span>
+                            </div>
+                        )}
+                    </div>
+                    <button className="exit-btn" onClick={onExit}>Exit</button>
                 </div>
-                <button className="exit-btn" onClick={onExit}>Exit</button>
             </div>
             <canvas
                 ref={canvasRef}
