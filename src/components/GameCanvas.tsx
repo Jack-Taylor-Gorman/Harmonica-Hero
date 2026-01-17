@@ -2,17 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { usePitchDetector } from '../audio/PitchDetection';
 import { type Song, type GameNote } from '../game/Types';
 import { TEST_SONG } from '../game/Songs';
+import { Capacitor } from '@capacitor/core';
+import { KeepAwake } from '@capacitor-community/keep-awake';
 import './GameCanvas.css';
 
 interface GameCanvasProps {
     onExit: () => void;
 }
 
-const NOTE_SPEED = 300; // Faster scroll for better precision
 const WINDOW_PERFECT = 0.08;
 const WINDOW_GOOD = 0.20;
 const LOOKAHEAD = 3.0; // Seconds of notes to render
-const VERSION = "v0.12.4"; // Zoom, 3x Speed, Dynamic Lookahead
 
 interface HitAnimation {
     x: number;
@@ -100,6 +100,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
     // Game State Mutable Refs
     const songRef = useRef<Song>(JSON.parse(JSON.stringify(TEST_SONG)));
 
+
+
     useEffect(() => {
         console.log("GameCanvas: Mounting...");
         if (!TEST_SONG) console.error("GameCanvas: TEST_SONG is undefined!");
@@ -110,6 +112,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
         } catch (e) {
             console.error("GameCanvas: Error starting listener", e);
         }
+
+        // Keep Screen On
+        const keepScreenOn = async () => {
+            try {
+                await KeepAwake.keepAwake();
+            } catch (err) {
+                console.warn("KeepAwake not supported/failed", err);
+            }
+        };
+        keepScreenOn();
 
         // DEBUG: Keyboard Input for Browser Testing
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -127,13 +139,29 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
 
-        // Resize Handling
+        // Resize Handling (DPI Aware for Sharpness)
+        // Resize Handling (DPI Aware for Sharpness)
         const handleResize = () => {
             if (canvasRef.current) {
                 const parent = canvasRef.current.parentElement;
                 if (parent) {
-                    canvasRef.current.width = canvasRef.current.clientWidth;
-                    canvasRef.current.height = canvasRef.current.clientHeight;
+                    const dpr = window.devicePixelRatio || 1;
+                    const parentRect = parent.getBoundingClientRect();
+
+                    // Respect CSS max-width: 600px
+                    const displayWidth = Math.min(parentRect.width, 600);
+                    const displayHeight = parentRect.height;
+
+                    // Set actual render resolution to physical pixels
+                    canvasRef.current.width = displayWidth * dpr;
+                    canvasRef.current.height = displayHeight * dpr;
+
+                    // Ensure internal drawing matches Scale
+                    const ctx = canvasRef.current.getContext('2d');
+                    if (ctx) {
+                        ctx.resetTransform();
+                        ctx.scale(dpr, dpr);
+                    }
                 }
             }
         };
@@ -148,6 +176,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
             window.removeEventListener('keyup', handleKeyUp);
             stopListening();
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
+
+            // Allow sleep again
+            KeepAwake.allowSleep().catch(() => { });
         };
     }, []);
 
@@ -268,14 +299,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                     let fontSize = 40;
 
                     if (diff <= WINDOW_PERFECT) {
-                        points = 300;
+                        points = 1; // 1 note = 1 score
                         ratingText = "PERFECT!";
-                        fontSize = 80; // Super Huge!
+                        fontSize = 80;
                         statsRef.current.perfect++;
                     } else {
-                        points = 100;
+                        points = 1; // 1 note = 1 score
                         ratingText = "GOOD";
-                        fontSize = 40; // Medium
+                        fontSize = 40;
                         statsRef.current.good++;
                     }
 
@@ -296,18 +327,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                         color: '#E65100', // Deep Orange
                         text: ratingText,
                         fontSize: fontSize,
-                        startTime: time // Use System Time for animation aging!
+                        startTime: time
                     });
                 }
             }
 
             // Miss Logic
             songRef.current.notes.forEach(note => {
-                // Use widest window (GOOD) + buffer for misses
                 if (!note.hit && !note.missed && audioTime > note.time + WINDOW_GOOD + 0.1) {
                     note.missed = true;
                     statsRef.current.missed++;
-                    statsRef.current.bad++; // Treat miss as bad or track separate? Just missed.
+                    statsRef.current.bad++;
                     statsRef.current.streak = 0;
                     setStreak(0);
                 }
@@ -319,14 +349,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
         } catch (err) { console.error(err); }
     };
 
+
+
+
     const render = (audioTime: number, sysTime: number) => {
         const detected = currentNoteRef.current;
         const canvas = canvasRef.current;
         if (!canvas || !canvas.getContext('2d')) return;
         const ctx = canvas.getContext('2d')!;
 
-        const width = canvas.width;
-        const height = canvas.height;
+        // Use logical width/height (CSS pixels) for calculation since we applied Scale(dpr, dpr)
+        const width = canvas.width / (window.devicePixelRatio || 1);
+        const height = canvas.height / (window.devicePixelRatio || 1);
         const laneWidth = width / 10;
         const targetY = height - 100;
 
@@ -490,11 +524,72 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
         });
     };
 
+    // Android Back Button Handler
+    useEffect(() => {
+        const isAndroid = Capacitor.getPlatform() === 'android';
+        if (isAndroid) {
+            import('@capacitor/app').then(({ App }) => {
+                App.addListener('backButton', () => {
+                    onExit(); // Trigger exit when hardware back is pressed
+                });
+            });
+        }
+
+        return () => {
+            if (isAndroid) {
+                import('@capacitor/app').then(({ App }) => {
+                    App.removeAllListeners();
+                });
+            }
+        };
+    }, [onExit]);
+
+    // Bottom Controls Interaction Logic
+    const [controlsVisible, setControlsVisible] = useState(true);
+    const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const showControls = () => {
+        setControlsVisible(true);
+        if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+
+        // Hide after 3 seconds
+        controlsTimeoutRef.current = setTimeout(() => {
+            setControlsVisible(false);
+        }, 3000);
+    };
+
+    // Show controls on mount
+    useEffect(() => {
+        showControls();
+        return () => {
+            if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+        };
+    }, []);
+
+    const handleInteraction = () => {
+        showControls();
+    };
+
+    const isAndroid = Capacitor.getPlatform() === 'android';
+
     return (
-        <div className="game-container">
+        <div
+            className="game-container"
+            onTouchStart={handleInteraction}
+            onMouseDown={handleInteraction}
+            onClick={handleInteraction}
+        >
             <div className="game-hud">
-                <div className="hud-top-bar">
-                    <div className="top-left-stats">
+                <div className="hud-top-bar" style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    width: '100%',
+                    maxWidth: '95%',
+                    padding: '10px 20px'
+                }}>
+                    {/* Left: Score & Streak */}
+                    <div className="top-left-stats" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         <div className="score">Score: {score}</div>
                         {streak > 5 && (
                             <div className="streak-hud">
@@ -504,60 +599,65 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                         )}
                     </div>
 
-                    <div className="top-center-controls" style={{ display: 'flex', gap: '20px' }}>
-                        <div className="speed-control">
-                            <label>Zoom: {Math.round(zoomLevel / 30 * 10)}%</label>
-                            <input
-                                type="range"
-                                min="100"
-                                max="900"
-                                step="50"
-                                value={zoomLevel}
-                                onChange={handleZoomChange}
-                                onMouseDown={(e) => e.stopPropagation()}
-                            />
-                        </div>
-                        <div className="speed-control">
-                            <label>Speed: {playbackSpeed}x</label>
-                            <input
-                                type="range"
-                                min="0.5"
-                                max="3.0"
-                                step="0.1"
-                                value={playbackSpeed}
-                                onChange={handleSpeedChange}
-                                onMouseDown={(e) => e.stopPropagation()}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="hud-btn-group">
+                    {/* Right Group: Retry + (Back if not Android) */}
+                    <div className="hud-right-group" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         <button className="hud-btn icon-only retry-btn" onClick={resetGame} title="Retry">
                             ↻
                         </button>
-                        <button className="hud-btn icon-only back-btn" onClick={onExit} title="Back">
-                            ✕
-                        </button>
+
+                        {/* Only show 'X' if NOT Android */}
+                        {!isAndroid && (
+                            <button className="hud-btn icon-only back-btn" onClick={onExit} title="Back">
+                                ✕
+                            </button>
+                        )}
                     </div>
+                </div>
+            </div>
+
+            {/* Bottom Controls - Fade Out */}
+            <div
+                className="hud-bottom-controls"
+                style={{
+                    opacity: controlsVisible ? 1 : 0,
+                    transition: 'opacity 0.5s ease-in-out',
+                    pointerEvents: controlsVisible ? 'auto' : 'none'
+                }}
+            >
+                <div className="speed-control">
+                    <label>Zoom: {Math.round(zoomLevel / 30 * 10)}%</label>
+                    <input
+                        type="range"
+                        min="100"
+                        max="900"
+                        step="50"
+                        value={zoomLevel}
+                        onChange={handleZoomChange}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                    />
+                </div>
+
+                <div className="speed-control">
+                    <label>Speed: {playbackSpeed}x</label>
+                    <input
+                        type="range"
+                        min="0.5"
+                        max="3.0"
+                        step="0.1"
+                        value={playbackSpeed}
+                        onChange={handleSpeedChange}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                    />
                 </div>
             </div>
             <canvas
                 ref={canvasRef}
                 className="game-canvas"
             />
-            <div style={{
-                position: 'absolute',
-                bottom: '10px',
-                right: '10px',
-                color: '#666',
-                fontFamily: 'Outfit, sans-serif',
-                fontSize: '12px',
-                opacity: 0.5,
-                pointerEvents: 'none'
-            }}>
-                {VERSION}
-            </div>
-        </div>
+
+        </div >
     );
 };
 

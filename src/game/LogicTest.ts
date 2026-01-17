@@ -1,5 +1,5 @@
 
-import { type GameNote, type Song } from './Types';
+import { type GameNote } from './Types';
 
 // MOCK CONSTANTS
 const WINDOW_PERFECT = 0.08;
@@ -8,7 +8,7 @@ const WINDOW_PERFECT = 0.08;
 let score = 0;
 let hitAnimations: any[] = [];
 let songNotes: GameNote[] = [
-    { time: 1.0, hole: 4, type: 'blow', duration: 1, id: 0, hit: false, missed: false }
+    { time: 1.0, hole: 4, type: 'blow', duration: 1, id: "0", hit: false, missed: false }
 ];
 
 // RE-IMPLEMENTATION OF LOGIC FOR TEST (Must match GameCanvas.tsx exactly)
