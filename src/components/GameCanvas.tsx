@@ -1,17 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { usePitchDetector } from '../audio/PitchDetection';
 import { type Song, type GameNote } from '../game/Types';
-import { SONGS } from '../game/Songs';
 import { Capacitor } from '@capacitor/core';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import './GameCanvas.css';
 
 interface GameCanvasProps {
     onExit: () => void;
+    song: Song;
+    onComplete: (stats: any) => void;
+    perfectionistMode?: boolean;
 }
 
-const WINDOW_PERFECT = 0.08;
-const WINDOW_GOOD = 0.20;
+const WINDOW_PERFECT = 0.12;
+const WINDOW_GOOD = 0.35;
 const LOOKAHEAD = 3.0; // Seconds of notes to render
 
 interface HitAnimation {
@@ -23,7 +25,7 @@ interface HitAnimation {
     startTime: number;
 }
 
-const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
+const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onComplete, perfectionistMode = false }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const requestRef = useRef<number | null>(null);
 
@@ -37,8 +39,33 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
     const [gameState] = useState<'playing' | 'finished'>('playing');
 
     // Controls
-    const [zoomLevel, setZoomLevel] = useState(300); // Visual Pixel Speed
-    const zoomLevelRef = useRef(300);
+    // Dynamic Zoom Calculation
+    const calculateInitialZoom = (s: Song) => {
+        // Use BPM if available for much better accuracy
+        if (s.bpm && s.bpm > 0) {
+            // Heuristic for good note spacing: 
+            // 60 BPM -> 300 zoom
+            // 120 BPM -> 500 zoom
+            // 180 BPM -> 700 zoom
+            // formula: 100 + BPM * 3.3
+            const bpmZoom = 100 + (s.bpm * 3.3);
+            return Math.max(250, Math.min(800, Math.round(bpmZoom)));
+        }
+
+        if (!s.notes || s.notes.length === 0) return 300;
+        const first = s.notes[0].time;
+        const last = s.notes[s.notes.length - 1].time;
+        const duration = last - first;
+        if (duration <= 0) return 300;
+
+        const nps = s.notes.length / duration;
+        // Heuristic fallback: Base 300 for ~5 NPS. Scale up.
+        let target = nps * 60;
+        return Math.max(250, Math.min(700, Math.round(target)));
+    };
+
+    const [zoomLevel, setZoomLevel] = useState(() => calculateInitialZoom(song));
+    const zoomLevelRef = useRef(calculateInitialZoom(song));
 
     const [playbackSpeed, setPlaybackSpeed] = useState(1.0); // Time Scale
     const playbackSpeedRef = useRef(1.0);
@@ -66,6 +93,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
         activeHitLockRef.current = null;
         silenceStartRef.current = 0;
         lastNoteRef.current = null;
+        maxRmsSinceLastHitRef.current = 0;
 
         // Reset Notes
         songRef.current.notes.forEach(n => { n.hit = false; n.missed = false; });
@@ -77,7 +105,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
 
     // Audio / Pitch Tracking
     // Disable Hz reporting to save performance!
-    const { startListening, stopListening, currentNote } = usePitchDetector({ reportHz: false });
+    const { startListening, stopListening, currentNote, rms } = usePitchDetector({ reportHz: false });
 
     // Track current and PREVIOUS note to detect fresh attacks
     const currentNoteRef = useRef<any>(null);
@@ -87,6 +115,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
     const activeHitLockRef = useRef<{ hole: number; type: string } | null>(null);
     const silenceStartRef = useRef<number>(0);
     const lastNoteRef = useRef<any>(null);
+    const maxRmsSinceLastHitRef = useRef<number>(0);
 
     // Stats Ref
     const statsRef = useRef({ perfect: 0, good: 0, bad: 0, missed: 0, streak: 0, maxStreak: 0 });
@@ -97,12 +126,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
     }, [currentNote]);
 
     // Game State Mutable Refs
-    const songRef = useRef<Song>(JSON.parse(JSON.stringify(SONGS[0])));
+    const songRef = useRef<Song>((() => {
+        const s = JSON.parse(JSON.stringify(song));
+        const START_DELAY = 2.0; // 2 Seconds gap
+        s.notes.forEach((n: any) => n.time += START_DELAY);
+        return s;
+    })());
 
     useEffect(() => {
         console.log("GameCanvas: Mounting...");
         if (!songRef.current) console.error("GameCanvas: NO SONG LOADED!");
-        else console.log("GameCanvas: Song loaded", songRef.current.title);
+        else console.log("GameCanvas: Song loaded", songRef.current.title, "Zoom:", zoomLevelRef.current);
 
         try {
             startListening();
@@ -137,7 +171,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
 
-        // Resize Handling (DPI Aware for Sharpness)
         // Resize Handling (DPI Aware for Sharpness)
         const handleResize = () => {
             if (canvasRef.current) {
@@ -210,51 +243,32 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
 
             const detected = currentNoteRef.current;
 
-            // DEBOUNCE LOGIC for "Fresh Attack":
-            // To prevent mic flickering (Note -> Null -> Note) from registering as a double hit,
-            // we only consider the note "released" if we've had sustained silence.
-
-            // 1. If we have a note, update the 'Last Known Note' and reset silence timer
-            if (detected) {
-                lastNoteRef.current = detected;
-                silenceStartRef.current = 0;
-            } else {
-                // 2. If no note, start silence timer if not started
-                if (silenceStartRef.current === 0) silenceStartRef.current = time;
+            // Track Peak Amplitude since last hit to detect dips
+            if (rms > maxRmsSinceLastHitRef.current) {
+                maxRmsSinceLastHitRef.current = rms;
             }
 
-            // 3. Determine "Effective" Previous Note State
-            // If silence has persisted < 16ms (1 frame), we "pretend" we are still holding the last note.
-            // This filters ONLY single-frame dropouts.
-            const minSilenceDuration = 16; // ms (User requested 1 frame)
-            const effectivelyHolding = lastNoteRef.current && (detected || (time - silenceStartRef.current < minSilenceDuration));
-
-            // 4. Fresh Attack Check
-            // A. Must have a detected note NOW.
-            // B. Must NOT have been "effectively holding" the SAME note previously.
-            //    (i.e., either we were effectively holding nothing, OR we were effectively holding a DIFFERENT note)
-
+            // DEBOUNCE LOGIC for "Fresh Attack":
             let isFreshAttack = false;
 
             if (detected) {
-                if (!effectivelyHolding) {
-                    isFreshAttack = true; // Clean attack after real silence
-                } else if (lastNoteRef.current && (lastNoteRef.current.hole !== detected.hole || lastNoteRef.current.type !== detected.type)) {
-                    isFreshAttack = true; // Clean transition to NEW note (instant switch)
-                }
-                // If effectivelyHolding SAME note, isFreshAttack remains false.
-            }
-
-            // Let's basically not clear the lock until silence > 100ms.
-            if (detected) {
                 // Check if we are locked on this note
-                const isLocked = activeHitLockRef.current &&
+                let isLocked = activeHitLockRef.current &&
                     activeHitLockRef.current.hole === detected.hole &&
                     activeHitLockRef.current.type === detected.type;
+
+                // VOLUME DIP DETECTION (Gap detection between same notes)
+                // If the current volume is less than 35% of the peak volume since the last hit,
+                // we treat it as a breath gap and break the lock.
+                if (isLocked && rms < maxRmsSinceLastHitRef.current * 0.35) {
+                    isLocked = false;
+                    activeHitLockRef.current = null;
+                }
 
                 if (!isLocked) {
                     isFreshAttack = true;
                     activeHitLockRef.current = detected; // Lock it!
+                    maxRmsSinceLastHitRef.current = rms; // Reset peak for next dip check
                 } else {
                     // We are locked. Reset silence timer to keep lock alive.
                     silenceStartRef.current = 0;
@@ -263,7 +277,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                 // No note detected.
                 if (silenceStartRef.current === 0) silenceStartRef.current = time;
 
-                if (time - silenceStartRef.current > 100) {
+                if (time - silenceStartRef.current > 50) {
                     // Sustained silence! Clear the lock.
                     activeHitLockRef.current = null;
                 }
@@ -338,6 +352,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
                     statsRef.current.bad++;
                     statsRef.current.streak = 0;
                     setStreak(0);
+
+                    if (perfectionistMode) {
+                        resetGame();
+                        // Show Feedback after reset
+                        hitAnimationsRef.current.push({
+                            x: 4,
+                            y: 300, // Middle
+                            color: '#d32f2f',
+                            text: "💀 FAIL",
+                            fontSize: 80,
+                            startTime: time
+                        });
+                        return;
+                    }
                 }
             });
 
@@ -363,10 +391,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
         const targetY = height - 100;
 
         // Dynamic Lookahead: Ensure we render enough notes to fill the screen
-        // plus a small buffer, regardless of zoom level.
         const zoom = zoomLevelRef.current;
         const visibleSeconds = (targetY / zoom) + 1.0; // +1s buffer off-screen top
-        // Use the larger of fixed lookahead or calculated visible area to prevent pop-in
         const effectiveLookahead = Math.max(LOOKAHEAD, visibleSeconds);
 
         // Clear - Gray Background
@@ -427,7 +453,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
             if (secondsUntilHit > effectiveLookahead || secondsUntilHit < -1) return;
 
             // Calculate Position
-            // y = Visual 'bottom' of the note (closest to target) because it flows down
             const y = targetY - (secondsUntilHit * zoom);
             const noteHeight = note.duration * zoom;
             const laneIndex = note.hole - 1;
@@ -436,42 +461,35 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit }) => {
             // Note Top Y
             const noteTop = y - noteHeight;
 
-            // 2. HIT LOGIC: "Clip" Effect
-            // Keep rendering the note, but hide any part that is below the target line.
-            // AND hide the note head if it crosses the line?
-            // "make the notes that were hit to stay but cover the notes after the bar"
-            // -> Just use a screen clip region for HIT notes.
-
             const color = note.type === 'blow' ? '#E65100' : '#2a2a2a';
             ctx.fillStyle = color;
 
             if (note.hit) {
-                // CLIP REGION: Define a rectangle from 0 to targetY (inclusive)
-                // Draw everything inside it. Anything below targetY is hidden.
+                // CLIP REGION
                 ctx.save();
                 ctx.beginPath();
                 ctx.rect(0, 0, width, targetY);
                 ctx.clip();
 
-                // Draw Body
-                ctx.fillRect(x + 4, noteTop, laneWidth - 8, noteHeight);
-
-                // Draw Head
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x + 4, y - 10, laneWidth - 8, 20);
-                ctx.fillRect(x + 4, y - 10, laneWidth - 8, 20);
+                // Draw Body (Rounded)
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(x + 4, noteTop, laneWidth - 8, noteHeight, 10);
+                } else {
+                    ctx.rect(x + 4, noteTop, laneWidth - 8, noteHeight);
+                }
+                ctx.fill();
 
                 ctx.restore();
             } else {
                 // NORMAL RENDER (Not hit yet)
-                // Render fully, even if overlapping line (standard gameplay)
-                ctx.fillRect(x + 4, noteTop, laneWidth - 8, noteHeight);
-
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x + 4, y - 10, laneWidth - 8, 20);
-                ctx.fillRect(x + 4, y - 10, laneWidth - 8, 20);
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(x + 4, noteTop, laneWidth - 8, noteHeight, 10);
+                } else {
+                    ctx.rect(x + 4, noteTop, laneWidth - 8, noteHeight);
+                }
+                ctx.fill();
             }
         });
 

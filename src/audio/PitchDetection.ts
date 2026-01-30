@@ -10,6 +10,7 @@ interface PitchDetectorConfig {
 export function usePitchDetector(config: PitchDetectorConfig = { reportHz: true }) {
     const [currentNote, setCurrentNote] = useState<NoteDefinition | null>(null);
     const [pitch, setPitch] = useState<number>(0);
+    const [rms, setRms] = useState<number>(0);
     const [isListening, setIsListening] = useState(false);
     const analyserRef = useRef<AnalyserNode | null>(null);
     const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
@@ -144,6 +145,16 @@ export function usePitchDetector(config: PitchDetectorConfig = { reportHz: true 
             smoothedPitch = sorted[Math.floor(sorted.length / 2)];
         }
 
+        // Expose RMS (calculated in autoCorrelate but let's re-calculate or just use a ref)
+        // For simplicity and to avoid changing autoCorrelate signature too much, 
+        // let's just do a quick RMS here.
+        let currentRms = 0;
+        for (let i = 0; i < buffer.length; i++) {
+            currentRms += buffer[i] * buffer[i];
+        }
+        currentRms = Math.sqrt(currentRms / buffer.length);
+        setRms(currentRms);
+
         if (smoothedPitch !== -1) {
             if (config.reportHz) setPitch(smoothedPitch);
             const note = matchNote(smoothedPitch);
@@ -173,5 +184,5 @@ export function usePitchDetector(config: PitchDetectorConfig = { reportHz: true 
         };
     }, []);
 
-    return { isListening, startListening, stopListening, pitch, currentNote };
+    return { isListening, startListening, stopListening, pitch, rms, currentNote };
 }

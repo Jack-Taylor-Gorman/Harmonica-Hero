@@ -29,6 +29,22 @@
   width: 100%;
 }
 
+.song-list button {
+  transition: all 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0.5;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .song-btn {
   text-align: left;
   display: flex;

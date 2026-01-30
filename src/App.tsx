@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import GameCanvas from './components/GameCanvas';
 import { songManager } from './game/SongManager';
@@ -11,7 +11,10 @@ function App() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
   const [lastStats, setLastStats] = useState<any>(null);
-  const [savedData, setSavedData] = useState<any>({ stars: {} });
+  const [savedData, setSavedData] = useState<any>({ stars: {}, highScores: {} });
+  const [isPerfectionist, setIsPerfectionist] = useState(false);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const touchStartPos = useRef<{ x: number, y: number } | null>(null);
 
   const isAndroid = Capacitor.getPlatform() === 'android';
 
@@ -34,25 +37,82 @@ function App() {
       // Load Scores for UI
       const scores = await songManager.getAllScores();
       const starMap: any = {};
+      const highScoreMap: any = {};
       scores.forEach(s => {
         starMap[s.songId] = s.stars;
+        if (s.score) highScoreMap[s.songId] = s;
       });
-      setSavedData({ stars: starMap });
+      setSavedData({ stars: starMap, highScores: highScoreMap });
 
-      // AUTO-START REMOVED: User requested a button for Katyusha.
-      // The menu will render the single song from Songs.ts.
-      /*
-      if (allSongs.length > 0) {
-        console.log("Auto-starting " + allSongs[0].title);
-        setSelectedSong(allSongs[0]);
-        setView('game');
+      // Load Favorites
+      const storedFavs = localStorage.getItem('hh_favorites');
+      if (storedFavs) {
+        setFavorites(new Set(JSON.parse(storedFavs)));
       }
-      */
     };
     init();
   }, []);
 
+  const toggleFavorite = (songId: string) => {
+    setFavorites(prev => {
+      const next = new Set(prev);
+      if (next.has(songId)) next.delete(songId);
+      else next.add(songId);
+      localStorage.setItem('hh_favorites', JSON.stringify(Array.from(next)));
+      return next;
+    });
+  };
+
+  // Long Press Logic
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressRef = useRef(false);
+
+  const handleTouchStart = (songId: string, e: React.TouchEvent | React.MouseEvent) => {
+    isLongPressRef.current = false;
+
+    // Store initial touch position
+    if ('touches' in e) {
+      touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else {
+      touchStartPos.current = { x: e.clientX, y: e.clientY };
+    }
+
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      toggleFavorite(songId);
+      if (navigator.vibrate) navigator.vibrate(50); // Haptic feedback
+    }, 800); // Increased from 600ms to 800ms
+  };
+
+  const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
+    // Cancel long press if user is scrolling
+    if (touchStartPos.current && longPressTimerRef.current) {
+      const currentX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const currentY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+      const deltaX = Math.abs(currentX - touchStartPos.current.x);
+      const deltaY = Math.abs(currentY - touchStartPos.current.y);
+
+      // If moved more than 10px, cancel the long press
+      if (deltaX > 10 || deltaY > 10) {
+        if (longPressTimerRef.current) {
+          clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = null;
+        }
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    touchStartPos.current = null;
+  };
+
   const handleStartGame = (song: Song) => {
+    if (isLongPressRef.current) return; // Ignore click if it was a long press
     setSelectedSong(song);
     setView('game');
   };
@@ -69,6 +129,10 @@ function App() {
         stars: {
           ...prev.stars,
           [selectedSong.id]: starsEarned
+        },
+        highScores: {
+          ...prev.highScores,
+          [selectedSong.id]: stats // Store full stats for percentage calc
         }
       }));
     }
@@ -145,26 +209,114 @@ function App() {
             <img src="/logo.png" alt="Harmonica Hero Logo" className="logo-img" />
             <h1 className="main-title">Harmonica Hero</h1>
             <p className="subtitle">Learn. Play. Master the C Harp.</p>
+
+            {/* Mode Toggle */}
+            <div className="mode-toggle" style={{ margin: '20px 0', display: 'flex', justifyContent: 'center', gap: '20px', background: 'rgba(0,0,0,0.2)', padding: '5px', borderRadius: '30px' }}>
+              <button
+                onClick={() => setIsPerfectionist(false)}
+                style={{
+                  background: !isPerfectionist ? '#4CAF50' : 'transparent',
+                  color: !isPerfectionist ? 'white' : '#aaa',
+                  border: 'none', padding: '8px 20px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s'
+                }}>
+                Normal
+              </button>
+              <button
+                onClick={() => setIsPerfectionist(true)}
+                style={{
+                  background: isPerfectionist ? '#d32f2f' : 'transparent',
+                  color: isPerfectionist ? 'white' : '#aaa',
+                  border: 'none', padding: '8px 20px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', transition: 'all 0.3s'
+                }}>
+                <span>Perfectionist</span>
+                <span>💀</span>
+              </button>
+            </div>
           </div>
 
           <div className="song-grid" style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
-            {songs.map(song => (
-              <button key={song.id} className="metro-btn song-select-btn" onClick={() => handleStartGame(song)} style={{ width: '100%', maxWidth: '600px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ textAlign: 'left' }}>
-                  <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{song.title}</span>
-                  <span style={{ marginLeft: '10px', opacity: 0.7 }}>{song.artist}</span>
-                </div>
+            {songs
+              .sort((a, b) => {
+                const aFav = favorites.has(a.id) ? 1 : 0;
+                const bFav = favorites.has(b.id) ? 1 : 0;
+                return bFav - aFav; // Favorites first
+              })
+              .map(song => {
+                const bestStats = savedData.highScores?.[song.id];
+                const bestPercent = bestStats ? Math.round((bestStats.score / (bestStats.perfect + bestStats.good + bestStats.missed)) * 100) : 0;
 
-                {/* Star Badge */}
-                {savedData.stars[song.id] && savedData.stars[song.id] !== 'none' && (
-                  <div className="star-badge" title={savedData.stars[song.id].toUpperCase()} style={{ fontSize: '1.2rem' }}>
-                    {savedData.stars[song.id] === 'gold' && '🏅'}
-                    {savedData.stars[song.id] === 'silver' && '🥈'}
-                    {savedData.stars[song.id] === 'bronze' && '🥉'}
-                  </div>
-                )}
-              </button>
-            ))}
+                return (
+                  <button
+                    key={song.id}
+                    className="metro-btn song-select-btn"
+                    onClick={() => handleStartGame(song)}
+                    // Long Press Handlers
+                    onMouseDown={(e) => handleTouchStart(song.id, e)}
+                    onMouseMove={handleTouchMove}
+                    onMouseUp={handleTouchEnd}
+                    onMouseLeave={handleTouchEnd}
+                    onTouchStart={(e) => handleTouchStart(song.id, e)}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+
+                    style={{
+                      width: '100%', maxWidth: '600px',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      background: '#E65100', // Orange as requested
+                      border: favorites.has(song.id) ? '2px solid #FFD700' : 'none',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div style={{ textAlign: 'left', zIndex: 2, flex: 1 }}>
+                      <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{song.title}</div>
+                      <span style={{ opacity: 0.8, fontSize: '0.9rem', display: 'block' }}>{song.artist}</span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px', zIndex: 2 }}>
+                      {/* Best Percentage */}
+                      {bestPercent > 0 && (
+                        <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'rgba(255,255,255,0.9)' }}>
+                          Best: {bestPercent}%
+                        </div>
+                      )}
+
+                      {/* Star Badge */}
+                      {savedData.stars[song.id] && savedData.stars[song.id] !== 'none' && (
+                        <div className="star-badge" title={savedData.stars[song.id].toUpperCase()} style={{ fontSize: '1.2rem' }}>
+                          {savedData.stars[song.id] === 'gold' && '🏅'}
+                          {savedData.stars[song.id] === 'silver' && '🥈'}
+                          {savedData.stars[song.id] === 'bronze' && '🥉'}
+                        </div>
+                      )}
+
+                      {/* Favorite Heart Icon - Only show for favorited songs */}
+                      {favorites.has(song.id) && (
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="white"
+                          style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+                        >
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+          </div>
+
+          {/* Version Number */}
+          <div style={{
+            marginTop: '20px',
+            paddingBottom: '20px',
+            fontSize: '0.75rem',
+            color: '#999',
+            opacity: 0.7
+          }}>
+            v1.0.0
           </div>
         </div>
       )}
@@ -175,6 +327,7 @@ function App() {
           // @ts-ignore
           song={selectedSong}
           onComplete={handleGameCompletion}
+          perfectionistMode={isPerfectionist}
         />
       )}
 
