@@ -292,7 +292,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                 // If the current volume is less than 75% (was 60%) of the peak volume since the last hit,
                 // we treat it as a breath gap and break the lock.
                 // High sensitivity required for fast repetitions.
-                if (isLocked && rms < maxRmsSinceLastHitRef.current * 0.5) {
+                if (isLocked && rms < maxRmsSinceLastHitRef.current * 0.9) {
                     isLocked = false;
                     activeHitLockRef.current = null;
                 }
