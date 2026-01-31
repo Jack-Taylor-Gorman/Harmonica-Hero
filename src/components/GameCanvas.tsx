@@ -259,15 +259,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
             const notes = songRef.current.notes;
             const lastNote = notes[notes.length - 1];
             if (lastNote && audioTime > lastNote.time + 3.0) {
-                console.log("GameCanvas: Looping Song!");
-                audioTimeRef.current = 0; // Reset Time
-                scoreRef.current = 0;
-                setScore(0);
-                renderStartIndexRef.current = 0; // Reset index
-                songRef.current.notes.forEach(n => { n.hit = false; n.missed = false; });
+                console.log("GameCanvas: Song Complete!");
 
-                if (gameState === 'playing') requestRef.current = requestAnimationFrame(update);
-                return;
+                // Finish Game
+                if (gameState === 'playing') {
+                    // Pass stats to parent
+                    _onComplete({
+                        score: scoreRef.current,
+                        ...statsRef.current
+                    });
+                }
+                return; // Stop Loop
             }
 
             const detected = currentNoteRef.current;
@@ -287,9 +289,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                     activeHitLockRef.current.type === detected.type;
 
                 // VOLUME DIP DETECTION (Gap detection between same notes)
-                // If the current volume is less than 60% (was 35%) of the peak volume since the last hit,
+                // If the current volume is less than 75% (was 60%) of the peak volume since the last hit,
                 // we treat it as a breath gap and break the lock.
-                if (isLocked && rms < maxRmsSinceLastHitRef.current * 0.60) {
+                // High sensitivity required for fast repetitions.
+                if (isLocked && rms < maxRmsSinceLastHitRef.current * 0.5) {
                     isLocked = false;
                     activeHitLockRef.current = null;
                 }
@@ -306,7 +309,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                 // No note detected.
                 if (silenceStartRef.current === 0) silenceStartRef.current = time;
 
-                if (time - silenceStartRef.current > 50) {
+                // SHORTENED TIMEOUT: 50ms -> 10ms
+                // If PitchDetection (which is already smoothed) says "silence" for >10ms,
+                // we should trust it and break the lock. 50ms was bridging legitimate gaps.
+                if (time - silenceStartRef.current > 1) {
                     // Sustained silence! Clear the lock.
                     activeHitLockRef.current = null;
                 }
@@ -317,18 +323,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                 let bestNote: GameNote | null = null;
                 let minDiff = Infinity;
 
-                songRef.current.notes.forEach(note => {
-                    if (note.hit || note.missed) return;
+                // 1. Check for CORRECT HIT (Hole + Type match)
+                for (const note of songRef.current.notes) {
+                    if (note.hit || note.missed) continue;
 
                     if (detected.hole === note.hole && detected.type === note.type) {
                         const diffToStart = Math.abs(audioTime - note.time);
-
-                        // Condition A: Inside Early BAD Window (e.g. 0.55s before start)
-                        // Condition B: Inside the note body (AudioTime is after start, before end)
-                        // This satisfies "Entire note" + generic early tolerance.
-
                         const isInsideNote = audioTime >= note.time && audioTime <= (note.time + note.duration);
 
+                        // Condition A: Inside Early BAD Window (or Good/Perfect)
+                        // Condition B: Inside the note body
                         if (diffToStart <= WINDOW_BAD || isInsideNote) {
                             if (diffToStart < minDiff) {
                                 minDiff = diffToStart;
@@ -336,7 +340,60 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                             }
                         }
                     }
-                });
+                }
+
+                // 2. Check for WRONG HIT (Hole Match, Type Mismatch)
+                // Only if we didn't find a valid hit? Or should wrong hits take precedence if closer?
+                // Let's check wrong hits if we didn't find a 'bestNote' or just generally.
+                // Actually, if you play WRONG breath, you fail.
+                // We should check if we are "trying" to hit a note but got the breath wrong.
+
+                if (!bestNote) {
+                    for (const note of songRef.current.notes) {
+                        if (note.hit || note.missed) continue;
+
+                        // Right Hole, Wrong Breath
+                        if (detected.hole === note.hole && detected.type !== note.type) {
+                            const diffToStart = Math.abs(audioTime - note.time);
+                            // If we are somewhat close to a note (within BAD window), allow registering as WRONG
+                            // Use WINDOW_BAD * 1.5 to be generous with "intent"
+                            if (diffToStart <= WINDOW_BAD * 1.5) {
+                                // WRONG!
+                                statsRef.current.bad++;
+                                statsRef.current.streak = 0;
+                                setStreak(0);
+
+                                // Visual Feedback
+                                hitAnimationsRef.current.push({
+                                    x: note.hole - 1,
+                                    y: 0,
+                                    color: '#d32f2f', // Red
+                                    text: "WRONG",
+                                    fontSize: 40,
+                                    startTime: time
+                                });
+
+                                if (perfectionistMode) {
+                                    resetGame();
+                                    hitAnimationsRef.current.push({
+                                        x: 4,
+                                        y: 300,
+                                        color: '#d32f2f',
+                                        text: "💀 FAIL",
+                                        fontSize: 80,
+                                        startTime: time
+                                    });
+                                    // RESTART LOOP BEFORE RETURNING
+                                    if (gameState === 'playing') requestRef.current = requestAnimationFrame(update);
+                                    return; // STOP EXECUTION IMMEDIATELY
+                                }
+                                // Only triggered once per fresh attack
+                                break;
+                            }
+                        }
+                    }
+                }
+
 
                 if (bestNote) {
                     const note = bestNote as GameNote;
@@ -359,12 +416,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                         statsRef.current.good++;
                         statsRef.current.streak++;
                     } else {
-                        // BAD HIT (Inside note body but missed the Good window)
+                        // BAD HIT
                         points = 0;
                         ratingText = "BAD";
                         fontSize = 40;
                         statsRef.current.bad++;
-                        statsRef.current.streak = 0; // Reset streak
+                        statsRef.current.streak = 0;
                         setStreak(0);
                     }
 
@@ -397,9 +454,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
             }
 
             // Miss Logic
-            songRef.current.notes.forEach(note => {
+            // Use for...of to allow breaking early
+            for (const note of songRef.current.notes) {
                 // If we are past the note end + buffer, it's a miss
-                // (Since we allow hitting inside the note now, we can't call it a miss until fully past)
                 if (!note.hit && !note.missed && audioTime > note.time + note.duration + 0.1) {
                     note.missed = true;
                     statsRef.current.missed++;
@@ -417,10 +474,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                             fontSize: 80,
                             startTime: time
                         });
-                        return;
+                        // RESTART LOOP BEFORE RETURNING
+                        if (gameState === 'playing') requestRef.current = requestAnimationFrame(update);
+                        return; // KEY FIX: Stop processing misses if we reset!
                     }
                 }
-            });
+            }
 
             render(audioTime, time);
             if (gameState === 'playing') requestRef.current = requestAnimationFrame(update);
