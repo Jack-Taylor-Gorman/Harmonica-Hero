@@ -316,7 +316,7 @@ function App() {
             color: '#999',
             opacity: 0.7
           }}>
-            v1.0.0
+            v2.0
           </div>
         </div>
       )}

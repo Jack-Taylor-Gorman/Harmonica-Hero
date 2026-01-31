@@ -318,7 +318,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                 }
             }
 
-            if (isFreshAttack) {
+            // -------------------------------------------------------------------------
+            // HIT DETECTION LOGIC (Modified for Legato/Consecutive Forgiveness)
+            // -------------------------------------------------------------------------
+
+            // Allow checking for hits if ANY note is detected (Fresh OR Locked/Held)
+            if (detected) {
                 // Find best note match
                 let bestNote: GameNote | null = null;
                 let minDiff = Infinity;
@@ -333,7 +338,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
 
                         // Condition A: Inside Early BAD Window (or Good/Perfect)
                         // Condition B: Inside the note body
-                        if (diffToStart <= WINDOW_BAD || isInsideNote) {
+
+                        // TIMING LOGIC REFINEMENT:
+                        // If Fresh Attack: Allow hitting early (BAD window)
+                        // If Held/Legato: wait until it is PERFECT to auto-snap!
+                        let hitThreshold = isFreshAttack ? WINDOW_BAD : WINDOW_PERFECT;
+
+                        if (diffToStart <= hitThreshold || (isFreshAttack && isInsideNote)) {
                             if (diffToStart < minDiff) {
                                 minDiff = diffToStart;
                                 bestNote = note;
@@ -342,13 +353,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                     }
                 }
 
-                // 2. Check for WRONG HIT (Hole Match, Type Mismatch)
-                // Only if we didn't find a valid hit? Or should wrong hits take precedence if closer?
-                // Let's check wrong hits if we didn't find a 'bestNote' or just generally.
-                // Actually, if you play WRONG breath, you fail.
-                // We should check if we are "trying" to hit a note but got the breath wrong.
-
-                if (!bestNote) {
+                // 2. Check for WRONG HIT (Penalty) - ONLY ON FRESH ATTACK
+                // prevent punishment for holding a wrong note
+                if (!bestNote && isFreshAttack) {
                     for (const note of songRef.current.notes) {
                         if (note.hit || note.missed) continue;
 
@@ -397,7 +404,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
 
                 if (bestNote) {
                     const note = bestNote as GameNote;
-                    const diff = Math.abs(audioTime - note.time);
+                    let diff = Math.abs(audioTime - note.time);
+
+                    // FORCE PERFECT FOR LEGATO/HELD NOTES ("Lean towards perfect")
+                    if (!isFreshAttack) {
+                        diff = 0;
+                    }
 
                     let points = 0;
                     let ratingText = "";
