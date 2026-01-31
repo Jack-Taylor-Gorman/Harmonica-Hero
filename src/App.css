@@ -1,9 +1,19 @@
 /* Cleared for custom styling */
 .app-container {
   width: 100%;
+  /* Restored margins for menu */
+  box-sizing: border-box;
+  padding: 0 20px;
   max-width: 600px;
   margin: 0 auto;
-  margin: 0 auto;
+}
+
+.game-view-container {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 .hero-header {
@@ -50,9 +60,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   background: #fff;
   color: #1a1a1a;
-  border: 2px solid #ddd;
+  border: none;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 

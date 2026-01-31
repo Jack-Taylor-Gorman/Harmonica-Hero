@@ -14,6 +14,7 @@ interface GameCanvasProps {
 
 const WINDOW_PERFECT = 0.12;
 const WINDOW_GOOD = 0.35;
+const WINDOW_BAD = 0.55; // New BAD window
 const LOOKAHEAD = 3.0; // Seconds of notes to render
 
 interface HitAnimation {
@@ -37,6 +38,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
     const [, setScore] = useState(0); // Score used for logic/stats, but not displayed in this simplified HUD
     const [streak, setStreak] = useState(0); // Visual streak state
     const [gameState] = useState<'playing' | 'finished'>('playing');
+
+    // UI State for adjustments
+    const [adjustingLabel, setAdjustingLabel] = useState<string | null>(null);
+    const adjustingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Controls
     // Dynamic Zoom Calculation
@@ -74,12 +79,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
         const val = parseInt(e.target.value);
         setZoomLevel(val);
         zoomLevelRef.current = val;
+
+        // "Zoom perc%"
+        setAdjustingLabel(`Zoom ${Math.round(val / 30 * 10)}%`);
+        if (adjustingTimeoutRef.current) clearTimeout(adjustingTimeoutRef.current);
+        adjustingTimeoutRef.current = setTimeout(() => setAdjustingLabel(null), 1000);
     };
 
     const handleSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = parseFloat(e.target.value);
         setPlaybackSpeed(val);
         playbackSpeedRef.current = val;
+
+        // "Speed x num"
+        setAdjustingLabel(`Speed x ${val.toFixed(2)}`);
+        if (adjustingTimeoutRef.current) clearTimeout(adjustingTimeoutRef.current);
+        adjustingTimeoutRef.current = setTimeout(() => setAdjustingLabel(null), 1000);
+    };
+
+    // Helper to stop propagation for sliders so game doesn't steal input
+    const handleSliderTouch = (e: React.TouchEvent | React.MouseEvent) => {
+        e.stopPropagation();
     };
 
     const resetGame = () => {
@@ -95,6 +115,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
         lastNoteRef.current = null;
         maxRmsSinceLastHitRef.current = 0;
 
+        // Render Optimization Index Reset
+        renderStartIndexRef.current = 0;
+
         // Reset Notes
         songRef.current.notes.forEach(n => { n.hit = false; n.missed = false; });
         console.log("Game Reset!");
@@ -102,6 +125,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
 
     // Animation effects
     const hitAnimationsRef = useRef<HitAnimation[]>([]);
+
+    // optimization: track start index for rendering
+    const renderStartIndexRef = useRef(0);
 
     // Audio / Pitch Tracking
     // Disable Hz reporting to save performance!
@@ -179,8 +205,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                     const dpr = window.devicePixelRatio || 1;
                     const parentRect = parent.getBoundingClientRect();
 
-                    // Respect CSS max-width: 600px
-                    const displayWidth = Math.min(parentRect.width, 600);
+                    // Respect CSS max-width: 600px ONLY on Desktop/Web (heuristic)
+                    // On Android/Mobile, we MUST take full width.
+                    const isAndroid = Capacitor.getPlatform() === 'android';
+                    const displayWidth = isAndroid ? parentRect.width : Math.min(parentRect.width, 600);
                     const displayHeight = parentRect.height;
 
                     // Set actual render resolution to physical pixels
@@ -235,6 +263,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                 audioTimeRef.current = 0; // Reset Time
                 scoreRef.current = 0;
                 setScore(0);
+                renderStartIndexRef.current = 0; // Reset index
                 songRef.current.notes.forEach(n => { n.hit = false; n.missed = false; });
 
                 if (gameState === 'playing') requestRef.current = requestAnimationFrame(update);
@@ -258,9 +287,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                     activeHitLockRef.current.type === detected.type;
 
                 // VOLUME DIP DETECTION (Gap detection between same notes)
-                // If the current volume is less than 35% of the peak volume since the last hit,
+                // If the current volume is less than 60% (was 35%) of the peak volume since the last hit,
                 // we treat it as a breath gap and break the lock.
-                if (isLocked && rms < maxRmsSinceLastHitRef.current * 0.35) {
+                if (isLocked && rms < maxRmsSinceLastHitRef.current * 0.60) {
                     isLocked = false;
                     activeHitLockRef.current = null;
                 }
@@ -292,12 +321,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                     if (note.hit || note.missed) return;
 
                     if (detected.hole === note.hole && detected.type === note.type) {
-                        const diff = Math.abs(audioTime - note.time);
+                        const diffToStart = Math.abs(audioTime - note.time);
 
-                        // Widest window is GOOD (0.20s)
-                        if (diff <= WINDOW_GOOD && diff < minDiff) {
-                            minDiff = diff;
-                            bestNote = note;
+                        // Condition A: Inside Early BAD Window (e.g. 0.55s before start)
+                        // Condition B: Inside the note body (AudioTime is after start, before end)
+                        // This satisfies "Entire note" + generic early tolerance.
+
+                        const isInsideNote = audioTime >= note.time && audioTime <= (note.time + note.duration);
+
+                        if (diffToStart <= WINDOW_BAD || isInsideNote) {
+                            if (diffToStart < minDiff) {
+                                minDiff = diffToStart;
+                                bestNote = note;
+                            }
                         }
                     }
                 });
@@ -311,32 +347,48 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                     let fontSize = 40;
 
                     if (diff <= WINDOW_PERFECT) {
-                        points = 1; // 1 note = 1 score
+                        points = 1;
                         ratingText = "PERFECT!";
                         fontSize = 80;
                         statsRef.current.perfect++;
-                    } else {
-                        points = 1; // 1 note = 1 score
+                        statsRef.current.streak++;
+                    } else if (diff <= WINDOW_GOOD) {
+                        points = 1;
                         ratingText = "GOOD";
-                        fontSize = 40;
+                        fontSize = 50;
                         statsRef.current.good++;
+                        statsRef.current.streak++;
+                    } else {
+                        // BAD HIT (Inside note body but missed the Good window)
+                        points = 0;
+                        ratingText = "BAD";
+                        fontSize = 40;
+                        statsRef.current.bad++;
+                        statsRef.current.streak = 0; // Reset streak
+                        setStreak(0);
+                    }
+
+                    if (diff <= WINDOW_GOOD) {
+                        if (statsRef.current.streak > statsRef.current.maxStreak) {
+                            statsRef.current.maxStreak = statsRef.current.streak;
+                        }
+                        setStreak(statsRef.current.streak);
                     }
 
                     note.hit = true;
                     scoreRef.current += points;
                     setScore(scoreRef.current);
 
-                    // Streak Update
-                    statsRef.current.streak++;
-                    if (statsRef.current.streak > statsRef.current.maxStreak) {
-                        statsRef.current.maxStreak = statsRef.current.streak;
-                    }
-                    setStreak(statsRef.current.streak);
+                    // Dynamic Color Logic
+                    // BAD = Off-White (#bdbdbd)
+                    // Blow = Orange
+                    // Draw = Black
+                    let animColor = ratingText === "BAD" ? '#bdbdbd' : (note.type === 'blow' ? '#E65100' : '#2a2a2a');
 
                     hitAnimationsRef.current.push({
                         x: note.hole - 1,
                         y: 0,
-                        color: '#E65100', // Deep Orange
+                        color: animColor,
                         text: ratingText,
                         fontSize: fontSize,
                         startTime: time
@@ -346,7 +398,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
 
             // Miss Logic
             songRef.current.notes.forEach(note => {
-                if (!note.hit && !note.missed && audioTime > note.time + WINDOW_GOOD + 0.1) {
+                // If we are past the note end + buffer, it's a miss
+                // (Since we allow hitting inside the note now, we can't call it a miss until fully past)
+                if (!note.hit && !note.missed && audioTime > note.time + note.duration + 0.1) {
                     note.missed = true;
                     statsRef.current.missed++;
                     statsRef.current.bad++;
@@ -355,10 +409,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
 
                     if (perfectionistMode) {
                         resetGame();
-                        // Show Feedback after reset
                         hitAnimationsRef.current.push({
                             x: 4,
-                            y: 300, // Middle
+                            y: 300,
                             color: '#d32f2f',
                             text: "💀 FAIL",
                             fontSize: 80,
@@ -374,9 +427,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
 
         } catch (err) { console.error(err); }
     };
-
-
-
 
     const render = (audioTime: number, sysTime: number) => {
         const detected = currentNoteRef.current;
@@ -396,6 +446,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
         const effectiveLookahead = Math.max(LOOKAHEAD, visibleSeconds);
 
         // Clear - Gray Background
+        // Paranoid Clear for Android Glitches
+        ctx.clearRect(0, 0, width, height);
         ctx.fillStyle = '#f5f5f5';
         ctx.fillRect(0, 0, width, height);
 
@@ -443,55 +495,132 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
         ctx.lineTo(width, targetY);
         ctx.stroke();
 
-        // Draw Notes
-        songRef.current.notes.forEach(note => {
-            // 1. MISS LOGIC: If missed, DO NOT RENDER (User Request: "immediately disappear")
-            if (note.missed) return;
 
+        // LAYER 1: Hit Text (Behind notes)
+        hitAnimationsRef.current = hitAnimationsRef.current.filter(anim => {
+            const age = sysTime - anim.startTime;
+            if (age > 600) return false; // Shorter life (snappier)
+
+            const x = anim.x * laneWidth + laneWidth / 2;
+            const floatY = targetY + 20 - (age / 600) * 80;
+            const alpha = 1 - (age / 600);
+
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = anim.color;
+            ctx.textAlign = "center";
+            ctx.font = `bold ${anim.fontSize}px Outfit, sans-serif`;
+            // ctx.fillText(anim.text, x, floatY + 50); // Old
+            ctx.fillText(anim.text, x, floatY);
+            ctx.restore();
+
+            return true;
+        });
+
+        // LAYER 2: Notes
+        // OPTIMIZATION: Use Start Index to avoid O(N) iteration
+        const notes = songRef.current.notes;
+        let startI = renderStartIndexRef.current;
+
+        // Safety check if notes array reset or something
+        if (startI >= notes.length) startI = 0;
+
+        // Adjust start index forward if notes are way past
+        while (startI < notes.length && (notes[startI].time - audioTime) < -2.0) {
+            startI++;
+        }
+        renderStartIndexRef.current = startI;
+
+        // Iterate from startI
+        for (let i = startI; i < notes.length; i++) {
+            const note = notes[i];
             const secondsUntilHit = note.time - audioTime;
-            // Standard LoA check
-            if (secondsUntilHit > effectiveLookahead || secondsUntilHit < -1) return;
 
-            // Calculate Position
+            // Break early if beyond lookahead
+            if (secondsUntilHit > effectiveLookahead) break;
+
+            // Should be handled by startI, but safety check for off-screen top
+            if (secondsUntilHit < -2.0) continue;
+
             const y = targetY - (secondsUntilHit * zoom);
             const noteHeight = note.duration * zoom;
             const laneIndex = note.hole - 1;
             const x = laneIndex * laneWidth;
-
-            // Note Top Y
             const noteTop = y - noteHeight;
 
-            const color = note.type === 'blow' ? '#E65100' : '#2a2a2a';
-            ctx.fillStyle = color;
+            // COMET SHAPE & GRADIENT
+            // 1. Gradient: Opaque at bottom (Start), Transparent at top (Tail)
+            // Note: noteTop is the TOP (Tail), y is the BOTTOM (Head). Y increases downwards.
+            // So Gradient from y (bottom) to noteTop (top).
 
+            const gradient = ctx.createLinearGradient(0, y, 0, noteTop);
+
+            // Convert Hex to RGBA for gradient
+            const baseColor = note.type === 'blow' ? '230, 81, 0' : '42, 42, 42';
+
+            gradient.addColorStop(0, `rgba(${baseColor}, 1)`);    // Head (Bottom) - Solid
+            gradient.addColorStop(0.4, `rgba(${baseColor}, 0.9)`); // Body - Mostly Solid
+            gradient.addColorStop(1, `rgba(${baseColor}, 0)`);    // Tail - Fade out
+
+            ctx.fillStyle = gradient;
+            ctx.strokeStyle = '#f5f5f5'; // Halo Color
+            ctx.lineWidth = 4;
+
+            // MANUAL CLIPPING (Optimization & Bug Fix)
+            // Instead of ctx.clip(), we simply clamp the bottom Y coordinate to targetY
+            // if the note is hit. This prevents drawing below the line.
+
+            let drawBottom = y;
             if (note.hit) {
-                // CLIP REGION
-                ctx.save();
-                ctx.beginPath();
-                ctx.rect(0, 0, width, targetY);
-                ctx.clip();
-
-                // Draw Body (Rounded)
-                ctx.beginPath();
-                if (ctx.roundRect) {
-                    ctx.roundRect(x + 4, noteTop, laneWidth - 8, noteHeight, 10);
-                } else {
-                    ctx.rect(x + 4, noteTop, laneWidth - 8, noteHeight);
-                }
-                ctx.fill();
-
-                ctx.restore();
-            } else {
-                // NORMAL RENDER (Not hit yet)
-                ctx.beginPath();
-                if (ctx.roundRect) {
-                    ctx.roundRect(x + 4, noteTop, laneWidth - 8, noteHeight, 10);
-                } else {
-                    ctx.rect(x + 4, noteTop, laneWidth - 8, noteHeight);
-                }
-                ctx.fill();
+                drawBottom = Math.min(y, targetY);
+                // If the entire note has passed (tail below target), skip
+                // Note: Top is physically "above" bottom (smaller Y value)
+                // But noteTop is calculated as y - height.
+                if (noteTop > targetY) continue;
             }
-        });
+
+            // Path Construction
+            // Bottom: Rounded Rectangle style (corner radius)
+            // Top: Tapers to a point at center
+
+            const radius = 10;
+            const left = x + 4;
+            const right = x + laneWidth - 4;
+            // Use clamped bottom
+            const bottom = drawBottom;
+            const top = noteTop; // The point
+            const centerX = (left + right) / 2;
+
+            ctx.beginPath();
+
+            // Start at Bottom-Left side (just above corner)
+            // If we are squashed (bottom near top), reduce radius effectively
+            const effRadius = Math.min(radius, Math.abs(bottom - top) / 2);
+
+            ctx.moveTo(left, bottom - effRadius);
+
+            // Bottom Left Corner
+            ctx.quadraticCurveTo(left, bottom, left + effRadius, bottom);
+
+            // Bottom Edge
+            ctx.lineTo(right - effRadius, bottom);
+
+            // Bottom Right Corner
+            ctx.quadraticCurveTo(right, bottom, right, bottom - effRadius);
+
+            // Right Side -> Taper to Top Center
+            ctx.quadraticCurveTo(right, (bottom + top) / 2, centerX, top);
+
+            // Left Side -> From Top Center back to Bottom Left
+            ctx.quadraticCurveTo(left, (bottom + top) / 2, left, bottom - effRadius);
+
+            ctx.closePath();
+
+            ctx.stroke(); // Halo
+            ctx.fill();   // Body
+
+            ctx.restore();
+        }
 
         // Debug: Draw Current Pitch Indicator
         if (detected) {
@@ -500,44 +629,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
 
             ctx.fillStyle = detected.type === 'blow' ? '#E65100' : '#2a2a2a';
 
-            // Glow effect
-            const glow = (Math.sin(sysTime / 100) + 1) * 5;
-            ctx.shadowBlur = 10 + glow;
-            ctx.shadowColor = ctx.fillStyle;
+            // Glow effect optimization: Remove shadowBlur for playback as well
+            // Or keep it just for this one single circle (less expensive than N notes)
+            // But let's be safe and remove it.
 
             ctx.beginPath();
             ctx.arc(x + laneWidth / 2, targetY, 15, 0, Math.PI * 2);
             ctx.fill();
-            ctx.shadowBlur = 0;
+
+            // Outline
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
         }
 
-        // Draw Hit Animations
-        hitAnimationsRef.current = hitAnimationsRef.current.filter(anim => {
-            const age = sysTime - anim.startTime;
-            if (age > 500) return false;
-
-            const x = anim.x * laneWidth + laneWidth / 2;
-            const radius = (age / 500) * 80;
-            const alpha = 1 - (age / 500);
-
-            ctx.strokeStyle = anim.color;
-            ctx.lineWidth = 4;
-            ctx.globalAlpha = alpha;
-            ctx.beginPath();
-            ctx.arc(x, targetY, radius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.globalAlpha = 1.0;
-
-            ctx.fillStyle = "#fff";
-            ctx.textAlign = "center";
-            ctx.font = `bold ${anim.fontSize}px Outfit, sans-serif`;
-
-            ctx.globalAlpha = alpha;
-            ctx.fillText(anim.text, x, targetY - radius - 10);
-            ctx.globalAlpha = 1.0;
-
-            return true;
-        });
     };
 
     // Android Back Button Handler
@@ -655,6 +760,36 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                 </div>
             </div>
 
+            {/* Central Adjustment Display */}
+            {adjustingLabel && (
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 100,
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <div style={{
+                        color: '#E65100',
+                        fontSize: '3.2rem',
+                        fontWeight: '800',
+                        fontFamily: 'Outfit, sans-serif',
+                        textShadow: '0 0 20px rgba(255, 255, 255, 0.8), 2px 2px 0px white',
+                        whiteSpace: 'nowrap',
+                        fontVariantNumeric: 'tabular-nums',
+                        minWidth: '300px',
+                        textAlign: 'center'
+                    }}>
+                        {adjustingLabel}
+                    </div>
+                </div>
+            )}
+
             {/* Bottom Controls - Fade Out */}
             <div
                 className="hud-bottom-controls"
@@ -682,13 +817,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                     <label>Speed: {playbackSpeed}x</label>
                     <input
                         type="range"
-                        min="0.5"
+                        min="0.25"
                         max="3.0"
-                        step="0.1"
+                        step="0.05"
                         value={playbackSpeed}
                         onChange={handleSpeedChange}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
+                        onMouseDown={handleSliderTouch}
+                        onTouchStart={handleSliderTouch}
+                    // Default browser behavior usually handles "sliding away" correctly for range inputs
+                    // but stopping propagation ensures the game canvas listeners don't interfere.
                     />
                 </div>
             </div>

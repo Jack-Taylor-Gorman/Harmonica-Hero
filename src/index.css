@@ -34,13 +34,13 @@ body {
 #root {
   width: 100%;
   margin: 0 auto;
+  /* Removed padding for game canvas full screen */
+  /* Removed padding for game canvas full screen */
   padding: 0;
-  padding-top: max(env(safe-area-inset-top), 20px);
-  padding-bottom: max(env(safe-area-inset-bottom), 20px);
-  padding-left: max(env(safe-area-inset-left), 16px);
-  padding-right: max(env(safe-area-inset-right), 16px);
+  width: 100vw;
+  /* Allow scrolling for menu, GameCanvas handles its own fixed viewport */
+  min-height: 100vh;
   text-align: center;
-  overflow: hidden;
 }
 
 h1 {

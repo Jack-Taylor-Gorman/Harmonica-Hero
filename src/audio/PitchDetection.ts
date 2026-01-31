@@ -18,7 +18,7 @@ export function usePitchDetector(config: PitchDetectorConfig = { reportHz: true 
 
     // Buffer for smoothing
     const pitchBufferRef = useRef<number[]>([]);
-    const SMOOTHING_WINDOW = 5;
+    const SMOOTHING_WINDOW = 3; // Reduced from 5 for lower latency
 
     const autoCorrelate = (buffer: Float32Array, sampleRate: number) => {
         const SIZE = buffer.length;

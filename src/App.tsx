@@ -164,7 +164,7 @@ function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className={view === 'menu' ? "app-container" : "game-view-container"}>
       {/* Auth UI - Hidden on Android */}
       {!isAndroid && <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 100 }}>
         {user ? (
@@ -260,10 +260,10 @@ function App() {
                     onTouchEnd={handleTouchEnd}
 
                     style={{
-                      width: '100%', maxWidth: '600px',
+                      width: '100%',
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                       background: '#E65100', // Orange as requested
-                      border: favorites.has(song.id) ? '2px solid #FFD700' : 'none',
+                      border: 'none',
                       position: 'relative',
                       overflow: 'hidden'
                     }}
