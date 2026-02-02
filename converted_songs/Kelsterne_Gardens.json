@@ -1,0 +1,270 @@
+{
+  "title": "Kelsterne Gardens",
+  "bpm": 224,
+  "notes": [
+    {
+      "time": 0,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.241
+    },
+    {
+      "time": 0.268,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.241
+    },
+    {
+      "time": 0.536,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.121
+    },
+    {
+      "time": 0.67,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 1.339,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.241
+    },
+    {
+      "time": 1.607,
+      "hole": 2,
+      "type": "blow",
+      "duration": 0.241
+    },
+    {
+      "time": 1.875,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.241
+    },
+    {
+      "time": 2.143,
+      "hole": 1,
+      "type": "blow",
+      "duration": 0.241
+    },
+    {
+      "time": 2.411,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.241
+    },
+    {
+      "time": 2.679,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 3.08,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 3.482,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 3.884,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 4.152,
+      "hole": 2,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 4.286,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.241
+    },
+    {
+      "time": 4.554,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.241
+    },
+    {
+      "time": 4.821,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.121
+    },
+    {
+      "time": 4.955,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 5.625,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.241
+    },
+    {
+      "time": 5.893,
+      "hole": 2,
+      "type": "blow",
+      "duration": 0.241
+    },
+    {
+      "time": 6.161,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.241
+    },
+    {
+      "time": 7.5,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.964
+    },
+    {
+      "time": 8.571,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.241
+    },
+    {
+      "time": 8.839,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.241
+    },
+    {
+      "time": 9.107,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.241
+    },
+    {
+      "time": 9.375,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 9.509,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.121
+    },
+    {
+      "time": 9.777,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.121
+    },
+    {
+      "time": 9.911,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 10.045,
+      "hole": 5,
+      "type": "draw",
+      "duration": 0.121
+    },
+    {
+      "time": 10.179,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.241
+    },
+    {
+      "time": 10.446,
+      "hole": 7,
+      "type": "blow",
+      "duration": 0.241
+    },
+    {
+      "time": 10.714,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.241
+    },
+    {
+      "time": 11.518,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.241
+    },
+    {
+      "time": 12.054,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.482
+    },
+    {
+      "time": 12.589,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 12.723,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.121
+    },
+    {
+      "time": 12.991,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.121
+    },
+    {
+      "time": 13.125,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 13.259,
+      "hole": 5,
+      "type": "draw",
+      "duration": 0.121
+    },
+    {
+      "time": 13.393,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 13.527,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.121
+    },
+    {
+      "time": 13.795,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.121
+    },
+    {
+      "time": 14.464,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.482
+    }
+  ]
+}

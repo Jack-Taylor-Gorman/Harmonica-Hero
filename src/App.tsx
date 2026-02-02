@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import GameCanvas from './components/GameCanvas';
 import { songManager } from './game/SongManager';
+import { processFile } from './utils/SongImporter';
 import type { Song } from './game/Types';
 
 import { Capacitor } from '@capacitor/core';
@@ -10,6 +11,7 @@ function App() {
   const [view, setView] = useState<'menu' | 'game' | 'results'>('menu');
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
+  const [customSongs, setCustomSongs] = useState<Song[]>([]);
   const [lastStats, setLastStats] = useState<any>(null);
   const [savedData, setSavedData] = useState<any>({ stars: {}, highScores: {} });
   const [isPerfectionist, setIsPerfectionist] = useState(false);
@@ -30,6 +32,19 @@ function App() {
       await songManager.init();
       const allSongs = await songManager.getAllSongs();
       setSongs(allSongs);
+
+      // Load Custom Songs from LocalStorage
+      try {
+        const localSongs = localStorage.getItem('hh_custom_songs');
+        if (localSongs) {
+          const parsed = JSON.parse(localSongs);
+          if (Array.isArray(parsed)) {
+            setCustomSongs(parsed);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load custom songs", e);
+      }
 
       const currentUser = songManager.getUser();
       if (currentUser) setUser(currentUser);
@@ -52,6 +67,24 @@ function App() {
     };
     init();
   }, []);
+
+  const saveCustomSongs = (newSongs: Song[]) => {
+    setCustomSongs(newSongs);
+    try {
+      localStorage.setItem('hh_custom_songs', JSON.stringify(newSongs));
+    } catch (e) {
+      alert("Storage Full! Cannot save song locally.");
+    }
+  };
+
+  const deleteCustomSong = (id: string, e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (confirm("Delete this song?")) {
+      const updated = customSongs.filter(s => s.id !== id);
+      saveCustomSongs(updated);
+    }
+  };
 
   const toggleFavorite = (songId: string) => {
     setFavorites(prev => {
@@ -81,7 +114,7 @@ function App() {
       isLongPressRef.current = true;
       toggleFavorite(songId);
       if (navigator.vibrate) navigator.vibrate(50); // Haptic feedback
-    }, 800); // Increased from 600ms to 800ms
+    }, 800);
   };
 
   const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
@@ -93,7 +126,6 @@ function App() {
       const deltaX = Math.abs(currentX - touchStartPos.current.x);
       const deltaY = Math.abs(currentY - touchStartPos.current.y);
 
-      // If moved more than 10px, cancel the long press
       if (deltaX > 10 || deltaY > 10) {
         if (longPressTimerRef.current) {
           clearTimeout(longPressTimerRef.current);
@@ -112,7 +144,7 @@ function App() {
   };
 
   const handleStartGame = (song: Song) => {
-    if (isLongPressRef.current) return; // Ignore click if it was a long press
+    if (isLongPressRef.current) return;
     setSelectedSong(song);
     setView('game');
   };
@@ -121,10 +153,7 @@ function App() {
     setLastStats(stats);
 
     if (selectedSong) {
-      // Save via Manager (handles Gold, Silver, Bronze logic)
       const starsEarned = await songManager.saveScore(selectedSong.id, stats);
-
-      // Update UI state
       setSavedData((prev: any) => ({
         stars: {
           ...prev.stars,
@@ -132,7 +161,7 @@ function App() {
         },
         highScores: {
           ...prev.highScores,
-          [selectedSong.id]: stats // Store full stats for percentage calc
+          [selectedSong.id]: stats
         }
       }));
     }
@@ -142,12 +171,10 @@ function App() {
   const handleLogin = async () => {
     if (!usernameInput) return;
     try {
-      // Simple hash for prototype (Not secure for real prod)
       const hash = btoa(passwordInput || "nopass");
       const u = await songManager.login(usernameInput, hash);
       setUser(u as { username: string });
       setShowLogin(false);
-      // Refresh songs/scores
       const scores = await songManager.getAllScores();
       const starMap: any = {};
       scores.forEach(s => starMap[s.songId] = s.stars);
@@ -160,12 +187,33 @@ function App() {
   const handleLogout = () => {
     songManager.logout();
     setUser(null);
-    setSavedData({ stars: {} }); // Reset view
+    setSavedData({ stars: {} });
   };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const newSong = await processFile(file);
+      const updated = [newSong, ...customSongs];
+      saveCustomSongs(updated);
+
+      alert(`Imported "${newSong.title}" successfully!`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+
+    } catch (err: any) {
+      alert(err.message || "Failed to import song");
+      console.error(err);
+    }
+  };
+
+  const visibleSongs = [...songs, ...customSongs];
 
   return (
     <div className={view === 'menu' ? "app-container" : "game-view-container"}>
-      {/* Auth UI - Hidden on Android */}
       {!isAndroid && <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 100 }}>
         {user ? (
           <div style={{ background: 'rgba(0,0,0,0.8)', padding: '10px', borderRadius: '8px', color: '#fff' }}>
@@ -210,7 +258,6 @@ function App() {
             <h1 className="main-title">Harmonica Hero</h1>
             <p className="subtitle">Learn. Play. Master the C Harp.</p>
 
-            {/* Mode Toggle */}
             <div className="mode-toggle" style={{ margin: '20px 0', display: 'flex', justifyContent: 'center', gap: '20px', background: 'rgba(0,0,0,0.2)', padding: '5px', borderRadius: '30px' }}>
               <button
                 onClick={() => setIsPerfectionist(false)}
@@ -234,19 +281,20 @@ function App() {
             </div>
           </div>
 
-          <div className="song-grid" style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
-            {songs
+          <div className="song-grid" style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center', width: '100%', padding: '0 20px', boxSizing: 'border-box' }}>
+            {visibleSongs
               .sort((a, b) => {
                 const aFav = favorites.has(a.id) ? 1 : 0;
                 const bFav = favorites.has(b.id) ? 1 : 0;
-                return bFav - aFav; // Favorites first
+                return bFav - aFav;
               })
               .map(song => {
                 const bestStats = savedData.highScores?.[song.id];
                 const bestPercent = bestStats ? Math.round((bestStats.score / (bestStats.perfect + bestStats.good + bestStats.missed)) * 100) : 0;
+                const isCustom = customSongs.some(cs => cs.id === song.id);
 
                 return (
-                  <button
+                  <div
                     key={song.id}
                     className="metro-btn song-select-btn"
                     onClick={() => handleStartGame(song)}
@@ -262,26 +310,39 @@ function App() {
                     style={{
                       width: '100%',
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      background: '#E65100', // Orange as requested
+                      background: '#E65100',
                       border: 'none',
                       position: 'relative',
-                      overflow: 'hidden'
+                      overflow: 'hidden',
+                      padding: '15px 20px',
+                      borderRadius: '30px',
+                      cursor: 'pointer',
+                      color: 'white',
+                      marginBottom: '10px'
                     }}
                   >
-                    <div style={{ textAlign: 'left', zIndex: 2, flex: 1 }}>
-                      <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{song.title}</div>
+                    <div style={{ textAlign: 'left', zIndex: 2, flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontWeight: 'bold', fontSize: '1.1rem',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>{song.title}</div>
                       <span style={{ opacity: 0.8, fontSize: '0.9rem', display: 'block' }}>{song.artist}</span>
+                      {song.warning && (
+                        <div style={{ color: '#ffccbc', fontSize: '0.75rem', marginTop: '4px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span>⚠️</span> {song.warning}
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px', zIndex: 2 }}>
-                      {/* Best Percentage */}
                       {bestPercent > 0 && (
                         <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'rgba(255,255,255,0.9)' }}>
-                          Best: {bestPercent}%
+                          {bestPercent}%
                         </div>
                       )}
 
-                      {/* Star Badge */}
                       {savedData.stars[song.id] && savedData.stars[song.id] !== 'none' && (
                         <div className="star-badge" title={savedData.stars[song.id].toUpperCase()} style={{ fontSize: '1.2rem' }}>
                           {savedData.stars[song.id] === 'gold' && '🏅'}
@@ -290,33 +351,75 @@ function App() {
                         </div>
                       )}
 
-                      {/* Favorite Heart Icon - Only show for favorited songs */}
+                      {/* Favorite Heart - Moved here to coexist properly */}
                       {favorites.has(song.id) && (
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="white"
-                          style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
-                        >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>
                           <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                         </svg>
                       )}
+
+                      {isCustom && (
+                        <div
+                          onClick={(e) => deleteCustomSong(song.id, e)}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onTouchStart={(e) => e.stopPropagation()}
+                          style={{
+                            background: 'transparent',
+                            borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            marginLeft: '5px',
+                            cursor: 'pointer',
+                            zIndex: 20,
+                            padding: '8px' // Hit area
+                          }}
+                        >
+                          {/* White SVG Trash Can */}
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
-                  </button>
+                  </div>
                 )
               })}
+
+            <div style={{ textAlign: 'center', marginTop: '20px', width: '100%' }}>
+              <input
+                type="file"
+                accept=".json,.txt,.xml,.musicxml,.mxl,.mid,.midi,application/xml,text/xml,application/vnd.recordare.musicxml+xml,audio/midi,audio/x-midi"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleFileImport}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="metro-btn"
+                style={{
+                  width: '100%',
+                  padding: '15px 20px',
+                  fontSize: '1rem',
+                  background: '#E65100',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
+                }}>
+                <span>📂</span> Import Song (MusicXML / MIDI)
+              </button>
+
+              <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '15px', lineHeight: '1.4', textAlign: 'left', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
+                <strong>💡 Quick Tips:</strong>
+                <ul style={{ margin: '5px 0 0 15px', padding: 0 }}>
+                  <li>Use <strong>Flute/Vocal</strong> parts for best results.</li>
+                  <li>Ensure song is in <strong>Key of C Major</strong>.</li>
+                  <li>Supports <strong>.musicxml</strong> and <strong>.mid</strong> files.</li>
+                </ul>
+              </div>
+            </div>
           </div>
 
-          {/* Version Number */}
-          <div style={{
-            marginTop: '20px',
-            paddingBottom: '20px',
-            fontSize: '0.75rem',
-            color: '#999',
-            opacity: 0.7
-          }}>
-            v2.0
+          <div style={{ marginTop: '20px', paddingBottom: '20px', fontSize: '0.75rem', color: '#999', opacity: 0.7 }}>
+            v2.2-UI
           </div>
         </div>
       )}
@@ -332,37 +435,102 @@ function App() {
       )}
 
       {view === 'results' && lastStats && (
-        <div className="results-overlay modal-glass" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'rgba(0,0,0,0.9)' }}>
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+          background: '#ffffff', // White
+          color: '#1a1a1a', // Black text
+          zIndex: 999
+        }}>
           {lastStats.missed === 0 && lastStats.good === 0 ? (
             <div className="perfect-celebration">
-              <h1 style={{ color: '#FFD700', fontSize: '3rem', textShadow: '0 0 20px #E65100', margin: 0 }}>
+              <h1 style={{ color: '#E65100', fontSize: '3rem', margin: 0 }}>
                 PERFECT PERFORMANCE!
               </h1>
               <div style={{ fontSize: '6rem', marginBottom: '20px' }}>🏅</div>
             </div>
           ) : lastStats.missed === 0 ? (
             <div className="full-combo-celebration">
-              <h1 style={{ color: '#C0C0C0', fontSize: '3rem', margin: 0 }}>
+              <h1 style={{ color: '#1a1a1a', fontSize: '3rem', margin: 0 }}>
                 FULL COMBO!
               </h1>
               <div style={{ fontSize: '6rem', marginBottom: '20px' }}>🥈</div>
             </div>
           ) : (
-            <h2>Song Complete!</h2>
+            // Standard Completion
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <h1 style={{ fontSize: '2.5rem', margin: 0, color: '#E65100' }}>Song Complete!</h1>
+              <div style={{ width: '60px', height: '4px', background: '#E65100', margin: '10px auto', borderRadius: '2px' }}></div>
+            </div>
           )}
 
-          <div className="stats-grid" style={{ background: '#222', padding: '20px', borderRadius: '10px', minWidth: '300px', marginBottom: '30px' }}>
-            <div style={{ color: '#E65100', fontSize: '2rem', fontWeight: 'bold', marginBottom: '10px' }}>Max Combo: {lastStats.maxStreak}</div>
-            <div style={{ fontSize: '1.2rem', marginBottom: '10px', opacity: 0.8 }}>Total Notes Hit: {lastStats.score} / {lastStats.perfect + lastStats.good + lastStats.missed}</div>
-            <div className="divider" style={{ borderBottom: '1px solid #444', margin: '15px 0' }}></div>
-            <div style={{ color: '#FFD700' }}>Perfect: {lastStats.perfect}</div>
-            <div style={{ color: '#FFA726' }}>Good: {lastStats.good}</div>
-            <div style={{ color: '#d32f2f' }}>Missed: {lastStats.missed}</div>
+          <div className="stats-grid" style={{
+            background: '#f9f9f9', // Light grey card 
+            padding: '30px',
+            borderRadius: '20px',
+            minWidth: '320px',
+            marginBottom: '40px',
+            border: '1px solid #eee',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.1)' // Lighter shadow
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <span style={{ fontSize: '1.1rem', color: '#666' }}>Score</span>
+              <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1a1a1a' }}>{lastStats.score}</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <span style={{ fontSize: '1.1rem', color: '#666' }}>Max Combo</span>
+              <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#E65100' }}>{lastStats.maxStreak}</span>
+            </div>
+
+            <div className="divider" style={{ borderBottom: '1px solid #eee', margin: '20px 0' }}></div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ color: '#E65100', fontWeight: 'bold' }}>Perfect</span>
+              <span>{lastStats.perfect}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ color: '#333', fontWeight: 'bold' }}>Good</span>
+              <span>{lastStats.good}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#d32f2f', fontWeight: 'bold' }}>Missed</span>
+              <span>{lastStats.missed}</span>
+            </div>
           </div>
 
           <div className="results-buttons" style={{ display: 'flex', gap: '20px' }}>
-            <button className="metro-btn large" onClick={() => selectedSong && handleStartGame(selectedSong)}>Retry Song</button>
-            <button className="metro-btn large secondary" onClick={() => setView('menu')}>Back to Menu</button>
+            <button
+              onClick={() => selectedSong && handleStartGame(selectedSong)}
+              style={{
+                background: '#E65100',
+                color: 'white',
+                border: 'none',
+                padding: '15px 30px',
+                borderRadius: '30px',
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(230, 81, 0, 0.4)'
+              }}
+            >
+              Retry Song
+            </button>
+            <button
+              onClick={() => setView('menu')}
+              style={{
+                background: 'transparent',
+                color: '#aaa',
+                border: '1px solid #444',
+                padding: '15px 30px',
+                borderRadius: '30px',
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+              }}
+            >
+              Back to Menu
+            </button>
           </div>
         </div>
       )}

@@ -15,4 +15,5 @@ export interface Song {
     bpm: number;
     offset: number; // Audio offset in seconds
     notes: GameNote[];
+    warning?: string; // e.g. "Auto-Adjusted: +2 semitones"
 }

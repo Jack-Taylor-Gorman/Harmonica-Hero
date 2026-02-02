@@ -169,13 +169,21 @@ export function usePitchDetector(config: PitchDetectorConfig = { reportHz: true 
 
     const stopListening = useCallback(() => {
         if (sourceRef.current) {
-            sourceRef.current.disconnect();
+            try {
+                sourceRef.current.disconnect();
+            } catch (e) { }
+            sourceRef.current = null; // Clear ref
         }
         if (animationFrameRef.current) {
             cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
         }
         setIsListening(false);
         pitchBufferRef.current = [];
+
+        // Release Hardware
+        audioContextManager.stopMicrophoneStream();
+
     }, []);
 
     useEffect(() => {

@@ -1,0 +1,348 @@
+{
+  "title": "The Game Cock",
+  "bpm": 120,
+  "notes": [
+    {
+      "time": 0,
+      "hole": 2,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 1,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 1.75,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 2.25,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 2.5,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 3.25,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 3.75,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 4.75,
+      "hole": 2,
+      "type": "blow",
+      "duration": 0.675
+    },
+    {
+      "time": 5.5,
+      "hole": 2,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 6,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 7,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 7.75,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 8.25,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 8.5,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 9.25,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 9.75,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 10.75,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.675
+    },
+    {
+      "time": 11.5,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 12,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 12.5,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 13.5,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 13.75,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 14.25,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 15,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 15.25,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 16,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 16.75,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.675
+    },
+    {
+      "time": 17.5,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 18,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 19.5,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 19.75,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 20.25,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 21,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 21.25,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 21.75,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 22.75,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.675
+    },
+    {
+      "time": 23.5,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 24,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 24.5,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 25.5,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 25.75,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 26.5,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 27,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 27.25,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 28,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 28.25,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 28.75,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 29.5,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 30,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 30.5,
+      "hole": 5,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 31,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 31.75,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 32.25,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 33.25,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 33.75,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 34.75,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.675
+    },
+    {
+      "time": 35.5,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.45
+    }
+  ]
+}

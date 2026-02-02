@@ -1,0 +1,318 @@
+{
+  "title": "Ger the Rigger",
+  "bpm": 120,
+  "notes": [
+    {
+      "time": 0,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 0.5,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 1,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 1.25,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 1.375,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.113
+    },
+    {
+      "time": 1.75,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.113
+    },
+    {
+      "time": 2,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 2.5,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.113
+    },
+    {
+      "time": 2.625,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 2.875,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 3,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 3.25,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 3.75,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 4,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 4.5,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 5,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 5.25,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 5.375,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.113
+    },
+    {
+      "time": 5.75,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.113
+    },
+    {
+      "time": 6,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 6.375,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.113
+    },
+    {
+      "time": 6.75,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 7,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.113
+    },
+    {
+      "time": 7.25,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.113
+    },
+    {
+      "time": 8,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 8.25,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 8.625,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 8.875,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 9,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 9.25,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 9.625,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 9.875,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 10,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 10.5,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.113
+    },
+    {
+      "time": 10.625,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 10.875,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 11,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 11.25,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 11.75,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 12,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 12.25,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 12.625,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 12.875,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 13,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 13.25,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 13.625,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 13.875,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 14,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 14.375,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.113
+    },
+    {
+      "time": 14.75,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.113
+    },
+    {
+      "time": 15,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.113
+    },
+    {
+      "time": 15.25,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.113
+    }
+  ]
+}

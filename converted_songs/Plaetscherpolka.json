@@ -1,0 +1,156 @@
+{
+  "title": "Plaetscherpolka",
+  "bpm": 120,
+  "notes": [
+    {
+      "time": 0,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 0.25,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 0.5,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 0.75,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 1,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 1.25,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 1.75,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 2,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 3.5,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 3.75,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 4.25,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 5.25,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.675
+    },
+    {
+      "time": 6.25,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 6.75,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 8,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 8.25,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 9.25,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 9.5,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 10,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 10.25,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 10.75,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 12,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 12.25,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 12.5,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 13.25,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.675
+    }
+  ]
+}

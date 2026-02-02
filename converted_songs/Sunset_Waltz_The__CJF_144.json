@@ -1,0 +1,390 @@
+{
+  "title": "Sunset Waltz,The. CJF.144",
+  "bpm": 15,
+  "notes": [
+    {
+      "time": 0,
+      "hole": 1,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 2,
+      "hole": 1,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 8,
+      "hole": 4,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 12,
+      "hole": 3,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 16,
+      "hole": 3,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 30,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 32,
+      "hole": 2,
+      "type": "blow",
+      "duration": 3.6
+    },
+    {
+      "time": 36,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 38,
+      "hole": 3,
+      "type": "draw",
+      "duration": 3.6
+    },
+    {
+      "time": 48,
+      "hole": 1,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 50,
+      "hole": 1,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 56,
+      "hole": 4,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 60,
+      "hole": 3,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 64,
+      "hole": 3,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 74,
+      "hole": 3,
+      "type": "draw",
+      "duration": 3.6
+    },
+    {
+      "time": 80,
+      "hole": 2,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 82,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 86,
+      "hole": 1,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 92,
+      "hole": 4,
+      "type": "draw",
+      "duration": 3.6
+    },
+    {
+      "time": 96,
+      "hole": 1,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 98,
+      "hole": 1,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 104,
+      "hole": 4,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 108,
+      "hole": 3,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 112,
+      "hole": 3,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 126,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 128,
+      "hole": 2,
+      "type": "blow",
+      "duration": 3.6
+    },
+    {
+      "time": 132,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 134,
+      "hole": 3,
+      "type": "draw",
+      "duration": 3.6
+    },
+    {
+      "time": 144,
+      "hole": 1,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 146,
+      "hole": 1,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 152,
+      "hole": 4,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 156,
+      "hole": 3,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 160,
+      "hole": 3,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 171,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.9
+    },
+    {
+      "time": 172,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 174,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.9
+    },
+    {
+      "time": 176,
+      "hole": 2,
+      "type": "blow",
+      "duration": 0.9
+    },
+    {
+      "time": 177,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.9
+    },
+    {
+      "time": 179,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 182,
+      "hole": 1,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 184,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 188,
+      "hole": 4,
+      "type": "draw",
+      "duration": 3.6
+    },
+    {
+      "time": 198,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 200,
+      "hole": 2,
+      "type": "blow",
+      "duration": 3.6
+    },
+    {
+      "time": 204,
+      "hole": 2,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 206,
+      "hole": 3,
+      "type": "draw",
+      "duration": 3.6
+    },
+    {
+      "time": 216,
+      "hole": 4,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 220,
+      "hole": 3,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 224,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 226,
+      "hole": 3,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 236,
+      "hole": 4,
+      "type": "draw",
+      "duration": 3.6
+    },
+    {
+      "time": 246,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 248,
+      "hole": 2,
+      "type": "blow",
+      "duration": 3.6
+    },
+    {
+      "time": 252,
+      "hole": 2,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 254,
+      "hole": 3,
+      "type": "draw",
+      "duration": 3.6
+    },
+    {
+      "time": 266,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 270,
+      "hole": 2,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 272,
+      "hole": 2,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 276,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 280,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 281,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 282,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 283,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 284,
+      "hole": 6,
+      "type": "draw",
+      "duration": 3.6
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "title": "Mock Scale C Major",
+  "bpm": 120,
+  "notes": [
+    {
+      "time": 0,
+      "hole": 1,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 0.5,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 1,
+      "hole": 2,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 1.5,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.45
+    }
+  ]
+}

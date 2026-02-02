@@ -62,7 +62,8 @@
 
 .hud-bottom-controls {
     position: absolute;
-    bottom: 5px;
+    bottom: 30px;
+    /* MODIFIED: Moved down 15px (approx 4mm) to 30px */
     width: 100%;
     display: flex;
     justify-content: center;

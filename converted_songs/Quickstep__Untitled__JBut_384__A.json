@@ -1,0 +1,282 @@
+{
+  "title": "Quickstep, Untitled. JBut.384, A",
+  "bpm": 165,
+  "notes": [
+    {
+      "time": 0.182,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.327
+    },
+    {
+      "time": 0.545,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 0.727,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.327
+    },
+    {
+      "time": 1.091,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 1.273,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 1.636,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 1.818,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.327
+    },
+    {
+      "time": 2.182,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 2.364,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 2.727,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 2.909,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.164
+    },
+    {
+      "time": 3.273,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.164
+    },
+    {
+      "time": 3.636,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 4,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.164
+    },
+    {
+      "time": 4.545,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.327
+    },
+    {
+      "time": 4.909,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 5.091,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.327
+    },
+    {
+      "time": 5.455,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 5.636,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 6,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 6.182,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.327
+    },
+    {
+      "time": 6.545,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 6.727,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 7.091,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 7.273,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.164
+    },
+    {
+      "time": 7.636,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.164
+    },
+    {
+      "time": 8,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 8.364,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.491
+    },
+    {
+      "time": 9.455,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.327
+    },
+    {
+      "time": 9.818,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 10.545,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.327
+    },
+    {
+      "time": 10.909,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 11.091,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.164
+    },
+    {
+      "time": 11.455,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.164
+    },
+    {
+      "time": 11.818,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.164
+    },
+    {
+      "time": 12,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 12.364,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 12.545,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 14.182,
+      "hole": 2,
+      "type": "blow",
+      "duration": 0.164
+    },
+    {
+      "time": 15.273,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 15.455,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.164
+    },
+    {
+      "time": 15.818,
+      "hole": 6,
+      "type": "blow",
+      "duration": 0.164
+    },
+    {
+      "time": 16,
+      "hole": 6,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 16.364,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 16.727,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.164
+    },
+    {
+      "time": 17.091,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.491
+    }
+  ]
+}

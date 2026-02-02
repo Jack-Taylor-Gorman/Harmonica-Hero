@@ -1,0 +1,348 @@
+{
+  "title": "I. Disdaine me still",
+  "bpm": 120,
+  "notes": [
+    {
+      "time": 1,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 1.25,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 1.75,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 2,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.9
+    },
+    {
+      "time": 4,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.675
+    },
+    {
+      "time": 5,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 5.5,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 5.75,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 6,
+      "hole": 4,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 10,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.675
+    },
+    {
+      "time": 10.75,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 11,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.9
+    },
+    {
+      "time": 12.5,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 13,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 13.5,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 14,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 15,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.675
+    },
+    {
+      "time": 19,
+      "hole": 1,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 19.25,
+      "hole": 2,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 19.75,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 21,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 22.5,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 23,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.338
+    },
+    {
+      "time": 23.375,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.113
+    },
+    {
+      "time": 23.5,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 23.75,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.225
+    },
+    {
+      "time": 26.5,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 27,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 27.5,
+      "hole": 2,
+      "type": "blow",
+      "duration": 0.675
+    },
+    {
+      "time": 28.5,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.675
+    },
+    {
+      "time": 29.5,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 30.5,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 32,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 35,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    },
+    {
+      "time": 37,
+      "hole": 3,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 37.75,
+      "hole": 2,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 42,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 43,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 44.5,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 46,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 47.5,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 48,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.9
+    },
+    {
+      "time": 49,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 50.5,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.9
+    },
+    {
+      "time": 51.5,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 52,
+      "hole": 5,
+      "type": "blow",
+      "duration": 0.9
+    },
+    {
+      "time": 53,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.9
+    },
+    {
+      "time": 54.5,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.675
+    },
+    {
+      "time": 55.25,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.225
+    },
+    {
+      "time": 55.5,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 56.5,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 57,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 57.5,
+      "hole": 4,
+      "type": "blow",
+      "duration": 0.45
+    },
+    {
+      "time": 58,
+      "hole": 4,
+      "type": "draw",
+      "duration": 1.8
+    },
+    {
+      "time": 60,
+      "hole": 4,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 60.5,
+      "hole": 3,
+      "type": "draw",
+      "duration": 0.45
+    },
+    {
+      "time": 62,
+      "hole": 3,
+      "type": "blow",
+      "duration": 1.8
+    }
+  ]
+}

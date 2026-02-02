@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="3.1">
+  <work>
+    <work-title>Mock Scale C Major</work-title>
+  </work>
+  <part-list>
+    <score-part id="P1">
+      <part-name>Music</part-name>
+    </score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions> 
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+      </attributes>
+      <direction>
+        <sound tempo="120"/>
+      </direction>
+      <!-- C4 -->
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+      </note>
+      <!-- D4 -->
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+      </note>
+      <!-- E4 -->
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+      </note>
+      <!-- F4 (Skipped! No Hole 2 Draw match in simple map, or mapped to something else?) 
+           Wait, F4 is NOT on C Harmonica easily without bends. C-maj diatonic.
+           Steps: C, D, E, F, G, A, B
+           Holes: 1B, 1D, 2B, 2D(G), 3B(G), 3D(B). 
+           Ah, F4 is missing in low octave of Richter? 
+           Check standard C Harp: 
+           1: C E G C E G C E G C (Blow)
+           2: D G B D F A B D F A (Draw)
+           F is in hole 5 draw, 9 draw.
+           F4 is missing in standard Richter bottom octave (it's G, B). 
+           So F4 should be skipped by my map logic.
+      -->
+      <!-- G4 -->
+      <note>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+      </note>
+    </measure>
+  </part>
+</score-partwise>

@@ -21,7 +21,14 @@ class AudioContextManager {
 
     public async getMicrophoneStream(): Promise<MediaStream> {
         if (this.micStream) {
-            return this.micStream;
+            // Check if active?
+            try {
+                if (this.micStream.active === false) {
+                    this.micStream = null;
+                }
+            } catch (e) { }
+
+            if (this.micStream) return this.micStream;
         }
         try {
             this.micStream = await navigator.mediaDevices.getUserMedia({
@@ -41,6 +48,15 @@ class AudioContextManager {
     public async resume() {
         if (this.audioContext?.state === 'suspended') {
             await this.audioContext.resume();
+        }
+    }
+
+    public stopMicrophoneStream() {
+        if (this.micStream) {
+            try {
+                this.micStream.getTracks().forEach(track => track.stop());
+            } catch (e) { console.error("Error stopping tracks", e); }
+            this.micStream = null;
         }
     }
 }
