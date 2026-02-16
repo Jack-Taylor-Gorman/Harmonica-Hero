@@ -81,6 +81,8 @@ function getBestTransposition(notes: { midi: number }[]): number {
 
 export async function processFile(file: File): Promise<Song> {
     const name = file.name.toLowerCase();
+    const type = file.type;
+    console.log(`Processing file: ${name}, type: ${type}, size: ${file.size}`);
 
     try {
         if (name.endsWith('.json')) {
@@ -92,7 +94,22 @@ export async function processFile(file: File): Promise<Song> {
         } else if (name.endsWith('.mid') || name.endsWith('.midi')) {
             return await parseMidi(file);
         } else {
-            throw new Error('Unsupported file extension. Use JSON, XML, MXL, or MIDI.');
+            // Fallback for Android sometimes not giving extension or weird type
+            if (type.includes('musicxml') || type.includes('xml')) {
+                return await parseXml(file);
+            }
+            if (type.includes('zip') || type.includes('octet-stream')) {
+                // Try zip logic first (MXL)
+                try {
+                    return await parseMxl(file);
+                } catch (e) {
+                    // If zip fails, maybe it's just a raw xml?
+                    console.warn("MXL parse failed on generic type, trying XML", e);
+                    return await parseXml(file);
+                }
+            }
+
+            throw new Error('Unsupported file extension/type. Use JSON, XML, MXL, or MIDI.');
         }
     } catch (e: any) {
         console.error("Import Error:", e);

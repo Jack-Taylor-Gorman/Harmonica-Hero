@@ -1,4 +1,8 @@
 /* Cleared for custom styling */
+* {
+  box-sizing: border-box;
+}
+
 .app-container {
   width: 100%;
   /* Restored margins for menu */
@@ -26,7 +30,7 @@
   width: 120px;
   max-width: 100%;
   height: auto;
-  margin-bottom: 1rem;
+  margin-bottom: 0.2rem;
   /* Add subtle glow */
   filter: drop-shadow(0 0 10px rgba(230, 81, 0, 0.3));
 }

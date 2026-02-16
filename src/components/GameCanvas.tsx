@@ -127,7 +127,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
 
     const songRef = useRef<Song>((() => {
         const s = JSON.parse(JSON.stringify(song));
-        const START_DELAY = 2.0;
+        const START_DELAY = 1.0;
         s.notes.forEach((n: any) => n.time += START_DELAY);
         return s;
     })());
@@ -642,8 +642,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onExit, song, onComplete: _onCo
                     </div>
 
                     <div style={{ position: 'absolute', right: '20px' }}>
-                        <button className="hud-btn back-btn" onClick={onExit} style={{ display: 'flex', gap: '5px', borderRadius: '20px', padding: '5px 15px', height: 'auto' }}>
-                            ❌ <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>Quit</span>
+                        <button className="hud-btn retry-btn" onClick={resetGame} style={{ display: 'flex', gap: '5px', borderRadius: '20px', padding: '5px 15px', height: 'auto' }}>
+                            🔄 <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>Restart</span>
                         </button>
                     </div>
                 </div>
